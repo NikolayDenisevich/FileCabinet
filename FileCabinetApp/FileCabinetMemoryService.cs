@@ -353,7 +353,7 @@ namespace FileCabinetApp
 
         private int GetLastRecordId()
         {
-            return this.list[this.list.Count - 1].Id;
+            return this.list.Count > 0 ? this.list[this.list.Count - 1].Id : this.list.Count;
         }
 
         private void RemoveRecordFromDictionary(int recordId, string keyName, FileCabinetRecord recordToRemove, Dictionary<string, List<FileCabinetRecord>> dictionary)

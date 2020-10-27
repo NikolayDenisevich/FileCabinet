@@ -12,22 +12,15 @@ namespace FileCabinetApp
     /// </summary>
     public class FileCabinetServiceSnapshot
     {
-        private List<FileCabinetRecord> records;
+        private IList<FileCabinetRecord> records;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetServiceSnapshot"/> class.
         /// </summary>
         /// <param name="records">The FileCabinetRecords collection.</param>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public FileCabinetServiceSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
-        {
-            if (records is null)
-            {
-                throw new ArgumentNullException($"{nameof(records)} is null");
-            }
-
-            this.records = new List<FileCabinetRecord>(records);
-        }
+        public FileCabinetServiceSnapshot(IReadOnlyCollection<FileCabinetRecord> records) =>
+            this.records = records != null ? new List<FileCabinetRecord>(records) : throw new ArgumentNullException($"{nameof(records)} is null");
 
         /// <summary>
         /// Gets records readonly collection.
@@ -41,13 +34,10 @@ namespace FileCabinetApp
         /// Saves records to csv.
         /// </summary>
         /// <param name="streamWriter">The streamWriter instance.</param>
-        /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when streamWriter is null.</exception>
         public void SaveToCsv(StreamWriter streamWriter)
         {
-            if (streamWriter is null)
-            {
-                throw new ArgumentNullException($"{nameof(streamWriter)} is null");
-            }
+            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)} is null");
 
             FileCabinetRecordCsvWriter csvWriter = new FileCabinetRecordCsvWriter(streamWriter);
             foreach (var item in this.records)
@@ -59,27 +49,15 @@ namespace FileCabinetApp
         /// <summary>
         /// Saves records to xml.
         /// </summary>
-        /// <param name="writer">The streamWriter instance.</param>
-        /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public void SaveToXml(StreamWriter writer)
+        /// <param name="streamWriter">The streamWriter instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when writer is null.</exception>
+        public void SaveToXml(StreamWriter streamWriter)
         {
-            if (writer is null)
+            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)} is null");
+            using var fileCabinetRecordXmlWriter = new FileCabinetRecordXmlWriter(streamWriter);
+            foreach (var item in this.records)
             {
-                throw new ArgumentNullException($"{nameof(writer)} is null");
-            }
-
-            FileCabinetRecordXmlWriter fileCabinetRecordXmlWriter;
-            using (XmlWriter xmlWriter = XmlWriter.Create(writer))
-            {
-                xmlWriter.WriteStartElement($"{nameof(this.records)}");
-
-                fileCabinetRecordXmlWriter = new FileCabinetRecordXmlWriter(xmlWriter);
-                foreach (var item in this.records)
-                {
-                    fileCabinetRecordXmlWriter.Write(item);
-                }
-
-                xmlWriter.WriteEndDocument();
+                fileCabinetRecordXmlWriter.Write(item);
             }
         }
 
@@ -87,22 +65,24 @@ namespace FileCabinetApp
         /// Loads records from csv file.
         /// </summary>
         /// <param name="streamReader">The StreamReader instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when streamReader is null.</exception>
         public void LoadFromCsv(StreamReader streamReader)
         {
+            streamReader = streamReader ?? throw new ArgumentNullException($"{nameof(streamReader)} is null");
             FileCabinetRecordCsvReader csvReader = new FileCabinetRecordCsvReader(streamReader);
-            var list = csvReader.ReadAll();
-            this.records = list as List<FileCabinetRecord>;
+            this.records = csvReader.ReadAll();
         }
 
         /// <summary>
         /// Loads records from xml file.
         /// </summary>
         /// <param name="streamReader">The StreamReader instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when streamReader is null.</exception>
         internal void LoadFromXml(StreamReader streamReader)
         {
+            streamReader = streamReader ?? throw new ArgumentNullException($"{nameof(streamReader)} is null");
             FileCabinetRecordXmlReader xmlReader = new FileCabinetRecordXmlReader(streamReader);
-            var list = xmlReader.ReadAll();
-            this.records = list as List<FileCabinetRecord>;
+            this.records = xmlReader.ReadAll();
         }
     }
 }

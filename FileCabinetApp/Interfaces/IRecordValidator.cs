@@ -11,11 +11,5 @@
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
         public void ValidateArguments(T arguments);
-
-        /// <summary>
-        /// Returns the InputValidator instance.
-        /// </summary>
-        /// <returns>The InputValidator instance.</returns>
-        public InputValidator GetInputValidator();
     }
 }

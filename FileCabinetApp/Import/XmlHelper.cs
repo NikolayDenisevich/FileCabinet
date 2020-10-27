@@ -34,7 +34,7 @@ namespace FileCabinetApp
         /// <value>
         /// The ID value of this instance.
         /// </value>
-        [XmlAttribute("id")]
+        [XmlAttribute(nameof(Id))]
         public int Id { get; set; }
 
         /// <summary>
@@ -52,8 +52,30 @@ namespace FileCabinetApp
         /// <value>
         /// The Date of Birth value of this instance.
         /// </value>
-        [XmlElement("dateOfBirth")]
+        [XmlIgnore]
         public DateTime DateOfBirth { get; set; }
+
+        /// <summary>
+        /// Gets or sets the string representation of Date of Birth value of this instance.
+        /// </summary>
+        /// <value>
+        /// The the string representation of Date of Birth value of this instance.
+        /// </value>
+        [XmlElement("DateOfBirth")]
+        public string DateOfBirthString
+        {
+            get
+            {
+                return this.DateOfBirth.ToString("dd/MM/yyyy", DateTimeFormatInfo.InvariantInfo);
+            }
+
+            set
+            {
+                DateTime result;
+                _ = DateTime.TryParse(value, out result);
+                this.DateOfBirth = result;
+            }
+        }
 
         /// <summary>
         /// Gets or sets full address value of this instance.
@@ -70,7 +92,7 @@ namespace FileCabinetApp
         /// <value>
         /// The Salary value of this instance.
         /// </value>
-        [XmlElement("salary")]
+        [XmlElement]
         public decimal Salary { get; set; }
 
         /// <summary>
@@ -79,8 +101,30 @@ namespace FileCabinetApp
         /// <value>
         /// The Gender value of this instance.
         /// </value>
-        [XmlElement("gender")]
+        [XmlIgnore]
         public char Gender { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Gender string representation value of this instance.
+        /// </summary>
+        /// <value>
+        /// The Gender string representation value of this instance.
+        /// </value>
+        [XmlElement("Gender")]
+        public string GenderString
+        {
+            get
+            {
+                return this.Gender.ToString(DateTimeFormatInfo.InvariantInfo);
+            }
+
+            set
+            {
+                char result;
+                _ = char.TryParse(value, out result);
+                this.Gender = result;
+            }
+        }
 
         /// <inheritdoc/>
         public override string ToString()

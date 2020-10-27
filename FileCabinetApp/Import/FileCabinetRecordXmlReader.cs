@@ -33,7 +33,7 @@ namespace FileCabinetApp
             var list = new List<FileCabinetRecord>();
 
             XmlHelper xmlData;
-            XmlSerializer serializer = new XmlSerializer(typeof(XmlHelper));
+            XmlSerializer serializer = new XmlSerializer(typeof(XmlHelper), string.Empty);
 #pragma warning disable CA5369 // Use XmlReader For Deserialize
             xmlData = (XmlHelper)serializer.Deserialize(this.reader);
 #pragma warning restore CA5369 // Use XmlReader For Deserialize

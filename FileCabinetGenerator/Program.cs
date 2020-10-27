@@ -108,7 +108,9 @@ namespace FileCabinetGenerator
             XmlSerializer serializer = new XmlSerializer(typeof(XmlHelper));
             using var stream = File.Open(FilePath, FileMode.CreateNew, FileAccess.Write);
             using var streamWriter = new StreamWriter(stream, Encoding.Unicode);
-            serializer.Serialize(streamWriter, xmlData);
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("", "");
+            serializer.Serialize(streamWriter, xmlData, ns);
         }
 
         public static Record[] GetRecordsXml()
@@ -185,7 +187,7 @@ namespace FileCabinetGenerator
                     Street = GetString(),
                 };
                 recordXml.Address = address;
-                recordXml.Salary = random.Next(1, 100_000);
+                recordXml.Salary = (random.Next(100, 10_000_000)) / 100m;
                 recordXml.Gender = GetChar();
                 recordsXml[i] = recordXml;
             }

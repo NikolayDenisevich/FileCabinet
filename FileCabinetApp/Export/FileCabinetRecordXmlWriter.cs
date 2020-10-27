@@ -1,29 +1,46 @@
 ﻿using System;
 using System.Globalization;
+using System.IO;
+using System.Text;
 using System.Xml;
+using System.Xml.Schema;
 
 namespace FileCabinetApp
 {
     /// <summary>
     /// Representes the FileCabinetRecordXmlWriter object.
     /// </summary>
-    public class FileCabinetRecordXmlWriter
+    public sealed class FileCabinetRecordXmlWriter : IDisposable
     {
         private readonly XmlWriter xmlWriter;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetRecordXmlWriter"/> class.
         /// </summary>
-        /// <param name="xmlWriter">XmlWriter instance.</param>
+        /// <param name="streamWriter">streamWriter instance.</param>
         /// <exception cref="ArgumentNullException">Thrown when textWriter is null.</exception>
-        public FileCabinetRecordXmlWriter(XmlWriter xmlWriter)
+        public FileCabinetRecordXmlWriter(StreamWriter streamWriter)
         {
-            if (xmlWriter is null)
-            {
-                throw new ArgumentNullException($"{nameof(xmlWriter)} is null");
-            }
+            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)} is null");
+            var settings = new XmlWriterSettings();
+            settings.OmitXmlDeclaration = false;
+            settings.Encoding = Encoding.Unicode;
+            settings.CloseOutput = false;
+            settings.WriteEndDocumentOnClose = true;
+            settings.Indent = true;
+            Console.WriteLine(settings.OutputMethod);
+            this.xmlWriter = XmlWriter.Create(streamWriter, settings);
+            this.xmlWriter.WriteStartDocument();
+            this.xmlWriter.WriteStartElement($"records");
+        }
 
-            this.xmlWriter = xmlWriter;
+        /// <summary>
+        /// Writes EndDocument.
+        /// </summary>
+        public void Dispose()
+        {
+            this.xmlWriter.WriteEndDocument();
+            this.xmlWriter.Close();
         }
 
         /// <summary>
@@ -33,10 +50,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when record is null.</exception>
         public void Write(FileCabinetRecord record)
         {
-            if (record is null)
-            {
-                throw new ArgumentNullException($"{nameof(record)} is null");
-            }
+            record = record ?? throw new ArgumentNullException($"{nameof(record)} is null");
 
             this.xmlWriter.WriteStartElement($"record");
             {
@@ -53,7 +67,7 @@ namespace FileCabinetApp
 
                 {
                     this.xmlWriter.WriteStartElement($"{nameof(record.DateOfBirth)}");
-                    this.xmlWriter.WriteValue($"{record.DateOfBirth.ToString("dd/mm/yyyy", DateTimeFormatInfo.InvariantInfo)}");
+                    this.xmlWriter.WriteValue($"{record.DateOfBirth.ToString("dd/MM/yyyy", DateTimeFormatInfo.InvariantInfo)}");
                     this.xmlWriter.WriteEndElement();
                 }
 
@@ -70,13 +84,13 @@ namespace FileCabinetApp
 
                 {
                     this.xmlWriter.WriteStartElement($"{nameof(record.Salary)}");
-                    this.xmlWriter.WriteValue($"{record.Salary}");
+                    this.xmlWriter.WriteValue($"{record.Salary.ToString(CultureInfo.InvariantCulture)}");
                     this.xmlWriter.WriteEndElement();
                 }
 
                 {
                     this.xmlWriter.WriteStartElement($"{nameof(record.Gender)}");
-                    this.xmlWriter.WriteValue($"{record.Gender}");
+                    this.xmlWriter.WriteValue($"{record.Gender.ToString(CultureInfo.InvariantCulture)}");
                     this.xmlWriter.WriteEndElement();
                 }
             }
