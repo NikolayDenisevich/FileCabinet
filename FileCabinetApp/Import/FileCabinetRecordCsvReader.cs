@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Text;
 
 namespace FileCabinetApp
 {
@@ -11,16 +10,14 @@ namespace FileCabinetApp
     /// </summary>
     public class FileCabinetRecordCsvReader
     {
-        private StreamReader reader;
+        private readonly StreamReader reader;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetRecordCsvReader"/> class.
         /// </summary>
         /// <param name="reader">StreamReader instance.</param>
-        public FileCabinetRecordCsvReader(StreamReader reader)
-        {
-            this.reader = reader;
-        }
+        /// <exception cref="ArgumentNullException">Thrown when reader is null.</exception>
+        public FileCabinetRecordCsvReader(StreamReader reader) => this.reader = reader ?? throw new ArgumentNullException($"{nameof(reader)}");
 
         /// <summary>
         /// Reads all records from csv file.

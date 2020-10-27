@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Globalization;
-using System.Xml.Serialization;
+using System.Text;
 
 namespace FileCabinetApp
 {
@@ -84,8 +84,17 @@ namespace FileCabinetApp
         /// <inheritdoc/>
         public override string ToString()
         {
-            return $"{this.Id},{this.FirstName},{this.LastName},{this.DateOfBirth.ToString("yyyy-MMM-dd", DateTimeFormatInfo.InvariantInfo)}," +
-                $"{this.ZipCode},{this.City},{this.Street},{this.Salary.ToString(CultureInfo.InvariantCulture)},{this.Gender}";
+            return new StringBuilder()
+                .Append($"{this.Id},")
+                .Append($"{this.FirstName},")
+                .Append($"{this.LastName},")
+                .Append($"{this.DateOfBirth.ToString("yyyy-MMM-dd", DateTimeFormatInfo.InvariantInfo)}, ")
+                .Append($"{this.ZipCode},")
+                .Append($"{this.City},")
+                .Append($"{this.Street},")
+                .Append($"{this.Salary.ToString(CultureInfo.InvariantCulture)},")
+                .Append($"{this.Gender}")
+                .ToString();
         }
     }
 }

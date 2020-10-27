@@ -27,7 +27,7 @@ namespace FileCabinetApp
         /// <param name="selectors">A set of posible columns names.</param>
         /// <param name="writer">Output stream for writing a table.</param>
         /// <typeparam name="T">Collection elements type.</typeparam>
-        /// <exception cref="ArgumentNullException">Thrown when collection is null. -or- writer is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when collection is null. -or- selectors is null. -or- writer is null.</exception>
         public static void CreateTable<T>(this IEnumerable<T> collection, Dictionary<string, string> selectors, TextWriter writer)
         {
             collection = collection ?? throw new ArgumentNullException($"{nameof(collection)}");
@@ -61,12 +61,7 @@ namespace FileCabinetApp
                     continue;
                 }
 
-#pragma warning disable CA1308 // Normalize strings to uppercase
-                string name = item.Key.ToLowerInvariant();
-#pragma warning restore CA1308 // Normalize strings to uppercase
-                string firstSymbol = name.Substring(0, 1);
-                name = name.Remove(0, 1).Insert(0, firstSymbol.ToUpperInvariant());
-                tableSettings.Add(name, 0);
+                tableSettings.Add(item.Key, 0);
             }
         }
 

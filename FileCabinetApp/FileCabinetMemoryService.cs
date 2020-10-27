@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -50,8 +49,8 @@ namespace FileCabinetApp
         /// Restrores all the containers after import from file.
         /// </summary>
         /// <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
-        /// <exception cref="ArgumentNullException">Thrown when snapshot is null.</exception>
         /// <returns>Restored records count.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when snapshot is null.</exception>
         public int Restore(FileCabinetServiceSnapshot snapshot)
         {
             snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)}");
@@ -194,17 +193,24 @@ namespace FileCabinetApp
         /// <summary>
         /// Returns records count.
         /// </summary>
+        /// <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
         /// <returns>Records count.</returns>
-        public (int, int) GetStat() => (this.list.Count, 0);
+        public int GetStat(out int removedRecordsCount)
+        {
+            removedRecordsCount = 0;
+            return this.list.Count;
+        }
 
         /// <summary>
         /// Pugres the data file.
         /// </summary>
-        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
-        public (int, int) Purge()
+        /// <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+        /// <returns>Purged records count.</returns>
+        public int Purge(out int totalRecordsBeforePurgeCount)
         {
             Console.WriteLine("You can use this command only for filesystem storage case.");
-            return (-1, -1);
+            totalRecordsBeforePurgeCount = -1;
+            return totalRecordsBeforePurgeCount;
         }
 
         private void EditRecord(RecordArguments newArguments, FileCabinetRecord existingRecord)

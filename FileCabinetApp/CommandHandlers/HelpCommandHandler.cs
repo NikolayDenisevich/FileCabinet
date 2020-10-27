@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.IO;
-using System.Text;
 
 namespace FileCabinetApp.CommandHandlers
 {
@@ -19,7 +14,7 @@ namespace FileCabinetApp.CommandHandlers
         private const string InsertCommandUsage = "insert (id, firstname, lastname, dateofbirth, zipcode, city, street, salary, gender) " +
             "values ('1', 'John', 'Doe', '18/5/1986', '6548', 'min', 'baki', '6548.5', 'f')";
 
-        private static string[][] helpMessages = new string[][]
+        private static readonly string[][] HelpMessages = new string[][]
         {
             new string[] { "help", "prints the help screen", "The 'help' command prints the help screen." },
             new string[] { "exit", "exits the application", "The 'exit' command exits the application." },
@@ -44,8 +39,10 @@ namespace FileCabinetApp.CommandHandlers
         /// Handles the 'help' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(HelpCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 PrintHelp(commandRequest.Parameters);
@@ -60,10 +57,10 @@ namespace FileCabinetApp.CommandHandlers
         {
             if (!string.IsNullOrEmpty(parameters))
             {
-                var index = Array.FindIndex(helpMessages, 0, helpMessages.Length, i => string.Equals(i[CommandHelpIndex], parameters, StringComparison.InvariantCultureIgnoreCase));
+                var index = Array.FindIndex(HelpMessages, 0, HelpMessages.Length, i => string.Equals(i[CommandHelpIndex], parameters, StringComparison.InvariantCultureIgnoreCase));
                 if (index >= 0)
                 {
-                    Console.WriteLine(helpMessages[index][ExplanationHelpIndex]);
+                    Console.WriteLine(HelpMessages[index][ExplanationHelpIndex]);
                 }
                 else
                 {
@@ -74,7 +71,7 @@ namespace FileCabinetApp.CommandHandlers
             {
                 Console.WriteLine("Available commands:");
 
-                foreach (var helpMessage in helpMessages)
+                foreach (var helpMessage in HelpMessages)
                 {
                     Console.WriteLine("\t{0}\t- {1}", helpMessage[CommandHelpIndex], helpMessage[DescriptionHelpIndex]);
                 }

@@ -14,8 +14,10 @@ namespace FileCabinetApp
         /// Initializes a new instance of the <see cref="CompositeValidator"/> class.
         /// </summary>
         /// <param name="validators">Validators collection.</param>
+        /// <exception cref="ArgumentNullException">Thrown when validators is null.</exception>
         public CompositeValidator(IEnumerable<IRecordValidator<RecordArguments>> validators)
         {
+            validators = validators ?? throw new ArgumentNullException(nameof(validators));
             this.validators = new List<IRecordValidator<RecordArguments>>(validators);
         }
 

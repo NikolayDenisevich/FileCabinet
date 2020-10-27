@@ -12,10 +12,6 @@ namespace FileCabinetApp.CommandHandlers
         private const string UpdateCommand = "update";
         private const string WhereLiteral = " where ";
         private const string SetLiteral = "set ";
-
-        private static Dictionary<string, List<object>> filtersDictionary;
-        private static Dictionary<string, string> settersDictionary;
-
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> service;
         private static InputValidator inputValidator;
 
@@ -24,18 +20,22 @@ namespace FileCabinetApp.CommandHandlers
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
         /// <param name="validator">InputValidator instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
         public UpdateCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService, InputValidator validator)
         {
-            service = fileCabinetService;
-            inputValidator = validator;
+            service = fileCabinetService ?? throw new ArgumentNullException(nameof(fileCabinetService));
+            inputValidator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
         /// <summary>
         /// Handles the 'update' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(UpdateCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 Update(commandRequest.Parameters);
@@ -48,9 +48,6 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void Update(string parameters)
         {
-            filtersDictionary = new Dictionary<string, List<object>>(StringComparer.InvariantCultureIgnoreCase);
-            settersDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            InitializeDictionaryByPropertiesNames(settersDictionary);
             const int ProperiesValuesIndex = 0;
             const int ProperiesFiltersIndex = 1;
             bool result = AreCorrectSetWhere(ref parameters);
@@ -60,29 +57,18 @@ namespace FileCabinetApp.CommandHandlers
             }
 
             string[] splittedParameters = parameters.Split(WhereLiteral, 2, StringSplitOptions.RemoveEmptyEntries);
+            Dictionary<string, string> settersDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            InitializeDictionaryByPropertiesNames(settersDictionary);
+            result = Parser.TryParseUpdateSetters(splittedParameters[ProperiesValuesIndex], settersDictionary);
+            if (!result)
+            {
+                return;
+            }
+
             string filters = splittedParameters.Length > 1 ? splittedParameters[ProperiesFiltersIndex] : null;
-            result = Parser.TryParceFilters(filters, filtersDictionary, out bool isAndAlsoCombineMethod);
-            if (!result)
+            result = TryGetFilteredCollection(filters, service, out IEnumerable<FileCabinetRecord> records);
+            if (!result || records is null)
             {
-                return;
-            }
-
-            result = Parser.TryParceUpdateSetters(splittedParameters[ProperiesValuesIndex], settersDictionary);
-            if (!result)
-            {
-                return;
-            }
-
-            var filtersPredicate = PredicatesFactory.GetPredicate(filtersDictionary, isAndAlsoCombineMethod);
-            if (filtersPredicate is null)
-            {
-                return;
-            }
-
-            var records = service.GetRecords(parameters, filtersPredicate);
-            if (!records.Any())
-            {
-                Print.NoRecordsWithFilters(filters);
                 return;
             }
 
@@ -100,7 +86,7 @@ namespace FileCabinetApp.CommandHandlers
             foreach (var item in records)
             {
                 RecordArguments arguments = GetRecordArguments(item);
-                result = Input.TryToUpdateArguments(arguments, propertiesNameValuePairs, inputValidator);
+                result = Input.TryToUpdateArgumentsWhithoutId(arguments, propertiesNameValuePairs, inputValidator);
                 if (result)
                 {
                     service.EditRecord(arguments);

@@ -32,10 +32,11 @@ namespace FileCabinetApp
         public IEnumerable<TRecord> GetRecords(string filters, Func<TRecord, bool> predicate);
 
         /// <summary>
-        /// Returns records quantity.
+        /// Returns records count.
         /// </summary>
-        /// <returns>records quantity.</returns>
-        public (int, int) GetStat();
+        /// <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
+        /// <returns>Records count.</returns>
+        public int GetStat(out int removedRecordsCount);
 
         /// <summary>
         /// Creates the FileCabinetServiceSnapshot instance.
@@ -60,7 +61,8 @@ namespace FileCabinetApp
         /// <summary>
         /// Pugres the data file.
         /// </summary>
-        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
-        public (int, int) Purge();
+        /// <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+        /// <returns>Purged records count.</returns>
+        public int Purge(out int totalRecordsBeforePurgeCount);
     }
 }

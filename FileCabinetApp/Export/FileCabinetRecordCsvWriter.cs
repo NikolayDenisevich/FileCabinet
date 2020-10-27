@@ -8,22 +8,15 @@ namespace FileCabinetApp
     /// </summary>
     public class FileCabinetRecordCsvWriter
     {
-        private TextWriter textWriter;
+        private readonly TextWriter textWriter;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetRecordCsvWriter"/> class.
         /// </summary>
         /// <param name="textWriter">Textwriter instance.</param>
         /// <exception cref="ArgumentNullException">Thrown when textWriter is null.</exception>
-        public FileCabinetRecordCsvWriter(TextWriter textWriter)
-        {
-            if (textWriter is null)
-            {
-                throw new ArgumentNullException($"{nameof(textWriter)} is null");
-            }
-
-            this.textWriter = textWriter;
-        }
+        public FileCabinetRecordCsvWriter(TextWriter textWriter) =>
+            this.textWriter = textWriter ?? throw new ArgumentNullException($"{nameof(textWriter)}");
 
         /// <summary>
         /// Writes the record to file.
@@ -32,11 +25,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when record is null.</exception>
         public void Write(FileCabinetRecord record)
         {
-            if (record is null)
-            {
-                throw new ArgumentNullException($"{nameof(record)} is null");
-            }
-
+            record = record ?? throw new ArgumentNullException($"{nameof(record)}");
             this.textWriter.WriteLine(record.ToString());
         }
     }

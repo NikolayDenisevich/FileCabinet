@@ -3,44 +3,42 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Xml;
-using System.Xml.Schema;
 
 namespace FileCabinetApp
 {
     /// <summary>
     /// Representes the FileCabinetRecordXmlWriter object.
     /// </summary>
-    public sealed class FileCabinetRecordXmlWriter : IDisposable
+    public class FileCabinetRecordXmlWriter : IDisposable
     {
         private readonly XmlWriter xmlWriter;
+        private bool disposed = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetRecordXmlWriter"/> class.
         /// </summary>
         /// <param name="streamWriter">streamWriter instance.</param>
-        /// <exception cref="ArgumentNullException">Thrown when textWriter is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when streamWriter is null.</exception>
         public FileCabinetRecordXmlWriter(StreamWriter streamWriter)
         {
-            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)} is null");
+            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)}");
             var settings = new XmlWriterSettings();
             settings.OmitXmlDeclaration = false;
             settings.Encoding = Encoding.Unicode;
             settings.CloseOutput = false;
             settings.WriteEndDocumentOnClose = true;
             settings.Indent = true;
-            Console.WriteLine(settings.OutputMethod);
             this.xmlWriter = XmlWriter.Create(streamWriter, settings);
             this.xmlWriter.WriteStartDocument();
             this.xmlWriter.WriteStartElement($"records");
         }
 
         /// <summary>
-        /// Writes EndDocument.
+        /// Finalizes an instance of the <see cref="FileCabinetRecordXmlWriter"/> class.
         /// </summary>
-        public void Dispose()
+        ~FileCabinetRecordXmlWriter()
         {
-            this.xmlWriter.WriteEndDocument();
-            this.xmlWriter.Close();
+            this.Dispose(false);
         }
 
         /// <summary>
@@ -50,7 +48,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when record is null.</exception>
         public void Write(FileCabinetRecord record)
         {
-            record = record ?? throw new ArgumentNullException($"{nameof(record)} is null");
+            record = record ?? throw new ArgumentNullException($"{nameof(record)}");
 
             this.xmlWriter.WriteStartElement($"record");
             {
@@ -96,6 +94,33 @@ namespace FileCabinetApp
             }
 
             this.xmlWriter.WriteEndElement();
+        }
+
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///  Frees resources.
+        /// </summary>
+        /// <param name="disposing">Indicates whether the method call comes from a Dispose method (its value is true) or from a finalizer (its value is false).</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                this.xmlWriter.WriteEndDocument();
+                this.xmlWriter.Dispose();
+            }
+
+            this.disposed = true;
         }
     }
 }

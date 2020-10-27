@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 
 namespace FileCabinetApp.CommandHandlers
 {
@@ -12,26 +11,26 @@ namespace FileCabinetApp.CommandHandlers
     {
         private const string SelectCommand = "select";
         private const string WhereLiteral = "where ";
-
-        private static Dictionary<string, List<object>> filtersDictionary;
-        private static Dictionary<string, string> selectorsDictionary;
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> service;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SelectCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public SelectCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
-            service = fileCabinetService;
+            service = fileCabinetService ?? throw new ArgumentNullException(nameof(fileCabinetService));
         }
 
         /// <summary>
         /// Handles the 'update' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(SelectCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 Select(commandRequest.Parameters);
@@ -44,9 +43,6 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void Select(string parameters)
         {
-            filtersDictionary = new Dictionary<string, List<object>>(StringComparer.InvariantCultureIgnoreCase);
-            selectorsDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            InitializeDictionaryByPropertiesNames(selectorsDictionary);
             if (string.IsNullOrWhiteSpace(parameters))
             {
                 SelectAll();
@@ -59,84 +55,70 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void SelectAll()
         {
+            Dictionary<string, string> selectorsDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            InitializeDictionaryByPropertiesNames(selectorsDictionary);
             const string NeedMarker = "+";
             Parser.SetValueToAllDictionaryEntries<FileCabinetRecord>(selectorsDictionary, NeedMarker);
-            service.GetRecords(null, null).CreateTable(selectorsDictionary, Console.Out);
+            SelectWhithoutFiltersUsingSelectors(selectorsDictionary);
+        }
+
+        private static void SelectWhithoutFiltersUsingSelectors(Dictionary<string, string> selectorsDictionary)
+        {
+            var records = service.GetRecords(null, null);
+            if (records.Any())
+            {
+                records.CreateTable(selectorsDictionary, Console.Out);
+            }
+            else
+            {
+                Print.NoRecords();
+            }
         }
 
         private static void SelectByCriteria(string parameters)
         {
-            int selectorsIndex = 0;
-            int filtersIndex = 1;
-            bool result;
+            Dictionary<string, string> selectorsDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            InitializeDictionaryByPropertiesNames(selectorsDictionary);
             bool areFiltersPresent = parameters.Contains(WhereLiteral, StringComparison.InvariantCultureIgnoreCase);
-            bool areSelectorsPresent = false;
-            bool isAndAlsoCombineMethod = false;
-            string[] splittedParameters = null;
-            string filters;
             if (areFiltersPresent)
             {
-                splittedParameters = parameters.Split(WhereLiteral, 2, StringSplitOptions.RemoveEmptyEntries);
-                areSelectorsPresent = splittedParameters.Length > 1;
-                filtersIndex = areSelectorsPresent ? filtersIndex : selectorsIndex;
-                filters = areSelectorsPresent ? splittedParameters[filtersIndex] : splittedParameters[filtersIndex];
-                result = Parser.TryParceFilters(filters, filtersDictionary, out isAndAlsoCombineMethod);
-                if (!result)
-                {
-                    return;
-                }
-            }
-
-            if (areSelectorsPresent)
-            {
-                string selectors = splittedParameters is null ? parameters : splittedParameters[selectorsIndex];
-                result = Parser.TryParceSelectors(selectors, selectorsDictionary);
-                if (!result)
-                {
-                    return;
-                }
+                SelectWithFiltersAndSelectors(parameters, selectorsDictionary);
             }
             else
             {
-                const string NeedMarker = "+";
-                Parser.SetValueToAllDictionaryEntries<FileCabinetRecord>(selectorsDictionary, NeedMarker);
+                bool result = Parser.TryParseSelectors(parameters, selectorsDictionary);
+                if (!result)
+                {
+                    return;
+                }
+
+                SelectWhithoutFiltersUsingSelectors(selectorsDictionary);
+            }
+        }
+
+        private static void SelectWithFiltersAndSelectors(string parameters, Dictionary<string, string> selectorsDictionary)
+        {
+            int selectorsIndex = 0;
+            int filtersIndex = 1;
+            bool result;
+            string[] splittedParameters = parameters.Split(WhereLiteral, 2, StringSplitOptions.RemoveEmptyEntries);
+            bool areSelectorsPresent = splittedParameters.Length > 1;
+            filtersIndex = areSelectorsPresent ? filtersIndex : selectorsIndex;
+            string filters = splittedParameters[filtersIndex];
+            string selectors = areSelectorsPresent ? splittedParameters[selectorsIndex] : null;
+            result = Parser.TryParseSelectors(selectors, selectorsDictionary);
+            if (!result)
+            {
+                return;
             }
 
-            var filtersPredicate = PredicatesFactory.GetPredicate(filtersDictionary, isAndAlsoCombineMethod);
-            filters = splittedParameters?[filtersIndex];
-            IEnumerable<FileCabinetRecord> records = GetRecords(areFiltersPresent, filtersPredicate, filters);
-            if (records is null)
+            result = TryGetFilteredCollection(filters, service, out IEnumerable<FileCabinetRecord> records);
+            if (!result)
             {
                 return;
             }
 
             records.CreateTable(selectorsDictionary, Console.Out);
-        }
-
-        private static IEnumerable<FileCabinetRecord> GetRecords(bool areFiltersPresent, Func<FileCabinetRecord, bool> filtersPredicate, string filters)
-        {
-            IEnumerable<FileCabinetRecord> records;
-            if (areFiltersPresent && filtersPredicate is null)
-            {
-                return null;
-            }
-
-            if (!areFiltersPresent)
-            {
-                records = service.GetRecords(null, null);
-            }
-            else
-            {
-                records = service.GetRecords(filters, filtersPredicate);
-            }
-
-            if (!records.Any())
-            {
-                Print.NoRecordsWithFilters(filters);
-                records = null;
-            }
-
-            return records;
         }
     }
 }

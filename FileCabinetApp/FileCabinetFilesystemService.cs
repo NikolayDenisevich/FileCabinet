@@ -30,6 +30,7 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="validator">The arguments record validator.</param>
         /// <param name="fileStream">File stream for working with data file.</param>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null. -or- fileStream is null. </exception>
         public FileCabinetFilesystemService(IRecordValidator<RecordArguments> validator, FileStream fileStream)
         {
             this.validator = validator ?? throw new ArgumentNullException($"{nameof(validator)}");
@@ -52,23 +53,24 @@ namespace FileCabinetApp
         /// <summary>
         /// Pugres the data file.
         /// </summary>
-        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
-        public (int, int) Purge()
+        /// <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+        /// <returns>Purged records count.</returns>
+        public int Purge(out int totalRecordsBeforePurgeCount)
         {
-            int totalRecordsCount = (int)(this.fileStream.Length / OneRecordFullLengthInBytes);
-            (int, int) valueToReturn;
+            totalRecordsBeforePurgeCount = (int)(this.fileStream.Length / OneRecordFullLengthInBytes);
+            int purgedRecords;
             if (this.deletedRecordsCount > 0)
             {
                 var notMarkedRecords = this.GetRecords(null, null);
-                valueToReturn = (this.deletedRecordsCount, totalRecordsCount);
+                purgedRecords = this.deletedRecordsCount;
                 this.ReinitializeServiceThroughWritingRecordsCollection(notMarkedRecords);
             }
             else
             {
-                valueToReturn = (-1, -1);
+                purgedRecords = totalRecordsBeforePurgeCount = -1;
             }
 
-            return valueToReturn;
+            return purgedRecords;
         }
 
         /// <summary>
@@ -131,12 +133,6 @@ namespace FileCabinetApp
         /// <param name="arguments">File cabinet record arguments.</param>
         /// <returns>Record ID.</returns>
         /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
-        /// <exception cref="ArgumentNullException">Thrown when arguments.Firstname, or arguments.Lastname, or arguments.City, or arguments.Street is null.</exception>
-        /// <exception cref="ArgumentException">Thrown when arguments.Firstname, or arguments.Lsatname, or arguments.City, or arguments.Street trimmed length less than 2 or more than 60.</exception>
-        /// <exception cref="ArgumentException">Thrown when arguments.DateOfBirth is less than 01-Jan-1950 and more than now.</exception>
-        /// <exception cref="ArgumentException">For parameter arguments.Gender permissible values are :'m', 'M', 'f', 'F'.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Arguments.ZipCode range is 1..9999.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Arguments.Salary range is 0..100 000.</exception>
         public int CreateRecord(RecordArguments arguments)
         {
             arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
@@ -189,6 +185,7 @@ namespace FileCabinetApp
         /// Removes specified record.
         /// </summary>
         /// <param name="recordId">Record Id.</param>
+        /// <exception cref="ArgumentException">There is no record #recordId in the list.</exception>
         public void Remove(int recordId)
         {
             long recordPosition = this.FindRecordPosition(recordId);
@@ -225,10 +222,12 @@ namespace FileCabinetApp
         /// <summary>
         /// Returns records count.
         /// </summary>
+        /// <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
         /// <returns>Records count.</returns>
-        public (int, int) GetStat()
+        public int GetStat(out int removedRecordsCount)
         {
-            return (this.currentRecordsCount, this.deletedRecordsCount);
+            removedRecordsCount = this.deletedRecordsCount;
+            return this.currentRecordsCount;
         }
 
         private static void WriteEmptyBytesFromEndOfStringValue(string value, BinaryWriter binaryWriter)
@@ -396,7 +395,7 @@ namespace FileCabinetApp
                 this.maxId = currentId;
             }
 
-            bool isExistKey = idsIndexer.TryGetValue(currentId, out long value);
+            bool isExistKey = idsIndexer.ContainsKey(currentId);
             if (!isExistKey)
             {
                 idsIndexer.Add(currentId, currentRecordStartPosition);

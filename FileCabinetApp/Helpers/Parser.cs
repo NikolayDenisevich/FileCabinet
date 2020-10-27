@@ -2,36 +2,68 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace FileCabinetApp
 {
+    /// <summary>
+    /// Representes Parser class.
+    /// </summary>
     internal static class Parser
     {
         private const string WhereLiteral = "where ";
         private const string AndLiteral = " and ";
         private const string OrLiteral = " or ";
+        private static InputValidator inputValidator;
 
-        internal static InputValidator InputValidator { get; set; }
-
-        internal static bool TryParceSelectors(string selectors, Dictionary<string, string> selectorsDictionary)
+        /// <summary>
+        /// Gets or sets Input validator instance.
+        /// </summary>
+        /// <value>
+        /// Input validator instance.
+        /// </value>
+        /// <exception cref="FieldAccessException">Thrown when inputValidator field is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
+        internal static InputValidator InputValidator
         {
+            get => inputValidator ?? throw new FieldAccessException($"{nameof(inputValidator)} field is null.");
+            set => inputValidator = value ?? throw new ArgumentNullException(nameof(value));
+        }
+
+        /// <summary>
+        /// Parses selectors to the selectors dictionary for the select command.
+        /// </summary>
+        /// <param name="selectors">The string representation of the selectors.</param>
+        /// <param name="selectorsDictionary">Parsing destinathon.</param>
+        /// <returns>true if the selectors dictionary is filled successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when selectorsDictionary is null.</exception>
+        internal static bool TryParseSelectors(string selectors, Dictionary<string, string> selectorsDictionary)
+        {
+            selectorsDictionary = selectorsDictionary ?? throw new ArgumentNullException(nameof(selectorsDictionary));
+            const string SelectorsMarker = "+";
+            if (string.IsNullOrWhiteSpace(selectors))
+            {
+                SetValueToAllDictionaryEntries<FileCabinetRecord>(selectorsDictionary, SelectorsMarker);
+                return true;
+            }
+
             const string CommaPropertiesSeparator = ",";
             SetValueToAllDictionaryEntries<FileCabinetRecord>(selectorsDictionary, null);
             selectors = selectors.Trim();
-            if (string.IsNullOrWhiteSpace(selectors))
-            {
-                Print.IncorrectSyntax(selectors);
-                return false;
-            }
-
-            return TryParceSetOfSelectors(selectors, CommaPropertiesSeparator, selectorsDictionary);
+            return TryParseSetOfSelectors(selectors, CommaPropertiesSeparator, selectorsDictionary);
         }
 
-        internal static bool TryParceUpdateSetters(string setters, Dictionary<string, string> settersDictionary)
+        /// <summary>
+        /// Parses setters to the setters dictionary for the update command.
+        /// </summary>
+        /// <param name="setters">The string representation of the setters.</param>
+        /// <param name="settersDictionary">Parsing destination.</param>
+        /// <returns>true if the setters dictionary is filled successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when settersDictionary is null.</exception>
+        internal static bool TryParseUpdateSetters(string setters, Dictionary<string, string> settersDictionary)
         {
+            settersDictionary = settersDictionary ?? throw new ArgumentNullException(nameof(settersDictionary));
             const string CommaPropertiesSeparator = ",";
-            Parser.SetValueToAllDictionaryEntries<FileCabinetRecord>(settersDictionary, null);
+            SetValueToAllDictionaryEntries<FileCabinetRecord>(settersDictionary, null);
             setters = setters.Trim();
             if (string.IsNullOrWhiteSpace(setters))
             {
@@ -45,17 +77,19 @@ namespace FileCabinetApp
                 return false;
             }
 
-            return TryParceSetOfUpdateSetters(setters, CommaPropertiesSeparator, settersDictionary);
+            return TryParseSetOfUpdateSetters(setters, CommaPropertiesSeparator, settersDictionary);
         }
 
         /// <summary>
-        /// Sets all propertiesNamesValuePairs dictionary values to null.
+        /// Sets all propertiesNamesValuePairs dictionary values ​​to the specified value.
         /// </summary>
-        /// <param name="propertiesNamesValuePairs">Name-Value pairs to set to null.</param>
+        /// <param name="propertiesNamesValuePairs">Name-Value pairs to set to the specified value.</param>
         /// <param name="value">Value to set to all dictionary entries.</param>
         /// <typeparam name="TRecord">Record type.</typeparam>
+        /// <exception cref="ArgumentNullException">Thrown when propertiesNamesValuePairs is null.</exception>
         internal static void SetValueToAllDictionaryEntries<TRecord>(Dictionary<string, string> propertiesNamesValuePairs, string value)
         {
+            propertiesNamesValuePairs = propertiesNamesValuePairs ?? throw new ArgumentNullException(nameof(propertiesNamesValuePairs));
             var properties = typeof(TRecord).GetProperties();
             foreach (var property in properties)
             {
@@ -71,34 +105,55 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="properties">A set of defined propeties.</param>
         /// <param name="parameters">Parameters for parsing.</param>
-        /// <param name="charSeparator">Сharacter separating the parameter and its value.</param>
-        internal static void ParceParameters(Tuple<string, Action<string, string>>[] properties, string parameters, char charSeparator)
+        /// <param name="propertyValue">When this method returns, contains parsed propertie value.</param>
+        /// <returns>true if parameters parsed successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when properties is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when parameters is null.</exception>
+        internal static bool TryParseImportExportParameters(string[] properties, ref string parameters, out string propertyValue)
         {
-            var inputs = parameters.Split(charSeparator, 2);
+            properties = properties ?? throw new ArgumentNullException(nameof(properties));
+            parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
+            const char CharSeparator = ' ';
+            string[] inputs = parameters.Split(CharSeparator, 2);
             const int propertyIndex = 0;
-            string property = inputs[propertyIndex].Trim();
-
-            if (string.IsNullOrEmpty(property))
+            string property = parameters = inputs[propertyIndex].Trim();
+            propertyValue = null;
+            if (string.IsNullOrEmpty(parameters))
             {
                 Print.ParametrizedCommandHint();
-                return;
+                return false;
             }
 
-            int index = Array.FindIndex(properties, 0, properties.Length, i => i.Item1.Equals(property, StringComparison.InvariantCultureIgnoreCase));
+            bool parseResult;
+            int index = Array.FindIndex(properties, 0, properties.Length, i => i.Equals(property, StringComparison.InvariantCultureIgnoreCase));
             if (index >= 0)
             {
                 const int valueIndex = 1;
-                string propertyValue = inputs.Length > 1 ? inputs[valueIndex].Trim().Trim('\'') : string.Empty;
-                properties[index].Item2(properties[index].Item1, propertyValue);
+                propertyValue = inputs.Length > 1 ? inputs[valueIndex].Trim().Trim('\'') : null;
+                parseResult = true;
             }
             else
             {
                 Print.MissedPropertyInfo(property);
+                parseResult = false;
             }
+
+            return parseResult;
         }
 
-        internal static bool TryParceFilters(string filters, Dictionary<string, List<object>> filtersDictionary, out bool isAndAlsoCombineMethod)
+        /// <summary>
+        /// Parses filters to the filters dictionary.
+        /// </summary>
+        /// <param name="filters">The string representation of the setters.</param>
+        /// <param name="filtersDictionary">Parsing destination.</param>
+        /// <param name="isAndAlsoCombineMethod">When this method returns, contains true if flters predicates combining method is AndAlso, false if felters predicates combining method is OrElse.</param>
+        /// <returns>true if the filters dictionary is filled successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when filters is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when filtersDictionary is null.</exception>
+        internal static bool TryParseFilters(string filters, Dictionary<string, List<object>> filtersDictionary, out bool isAndAlsoCombineMethod)
         {
+            filters = filters ?? throw new ArgumentNullException(nameof(filters));
+            filtersDictionary = filtersDictionary ?? throw new ArgumentNullException(nameof(filtersDictionary));
             filters = filters.Trim();
             isAndAlsoCombineMethod = false;
             if (string.IsNullOrWhiteSpace(filters))
@@ -110,19 +165,19 @@ namespace FileCabinetApp
             if (filters.Contains(AndLiteral, StringComparison.InvariantCultureIgnoreCase))
             {
                 isAndAlsoCombineMethod = true;
-                return TryParceSetOfFilters(filters, AndLiteral, filtersDictionary);
+                return TryParseSetOfFilters(filters, AndLiteral, filtersDictionary);
             }
             else if (filters.Contains(OrLiteral, StringComparison.InvariantCultureIgnoreCase))
             {
-                return TryParceSetOfFilters(filters, OrLiteral, filtersDictionary);
+                return TryParseSetOfFilters(filters, OrLiteral, filtersDictionary);
             }
             else
             {
-                return TryParceOneFilter(filters, WhereLiteral, filtersDictionary);
+                return TryParseOneFilter(filters, WhereLiteral, filtersDictionary);
             }
         }
 
-        private static bool TryParceSetOfSelectors(string selectors, string selectorsSeparator, Dictionary<string, string> destination)
+        private static bool TryParseSetOfSelectors(string selectors, string selectorsSeparator, Dictionary<string, string> destination)
         {
             const string IsPresentLiteral = "+";
             string[] selectedProperties = selectors.Split(selectorsSeparator, StringSplitOptions.RemoveEmptyEntries);
@@ -146,14 +201,14 @@ namespace FileCabinetApp
             return parceResult;
         }
 
-        private static bool TryAddToPropertiesNameValuePairs(string[] splittedPair, string filterKeyValuePair, Dictionary<string, string> destination)
+        private static bool TryAddToPropertiesNameValuePairs(string[] splittedPair, string keyValuePair, Dictionary<string, string> destination)
         {
             const int ValidPairLength = 2;
             const int KeyIndex = 0;
             const int ValueIndex = 1;
             if (splittedPair.Length != ValidPairLength)
             {
-                Print.IncorrectSyntax(filterKeyValuePair);
+                Print.IncorrectSyntax(keyValuePair);
                 return false;
             }
 
@@ -173,13 +228,13 @@ namespace FileCabinetApp
             return true;
         }
 
-        private static bool TryParceSetOfUpdateSetters(string setters, string propertiesSeparator, Dictionary<string, string> destination)
+        private static bool TryParseSetOfUpdateSetters(string setters, string propertiesSeparator, Dictionary<string, string> destination)
         {
             string[] filtersKeyValuePairs = setters.Split(propertiesSeparator, StringSplitOptions.RemoveEmptyEntries);
             bool parceResult = false;
             foreach (var item in filtersKeyValuePairs)
             {
-                parceResult = TryParceOneUpdateSetters(item, destination);
+                parceResult = TryParseOneUpdateSetters(item, destination);
                 if (!parceResult)
                 {
                     break;
@@ -189,7 +244,7 @@ namespace FileCabinetApp
             return parceResult;
         }
 
-        private static bool TryParceOneUpdateSetters(string nameValuePair, Dictionary<string, string> destination)
+        private static bool TryParseOneUpdateSetters(string nameValuePair, Dictionary<string, string> destination)
         {
             const char QuoteLiteral = '\'';
             nameValuePair = nameValuePair.Trim();
@@ -220,7 +275,7 @@ namespace FileCabinetApp
             return result ? TryAddToPropertiesNameValuePairs(splittedPair, nameValuePair, destination) : result;
         }
 
-        private static bool TryParceOneFilter(string nameValuePair, string propertiesSeparator, Dictionary<string, List<object>> destination)
+        private static bool TryParseOneFilter(string nameValuePair, string propertiesSeparator, Dictionary<string, List<object>> destination)
         {
             nameValuePair = nameValuePair.Trim();
             if (string.IsNullOrWhiteSpace(nameValuePair))
@@ -244,13 +299,13 @@ namespace FileCabinetApp
             return TryAddFilerToDictionary(splittedPair, nameValuePair, destination);
         }
 
-        private static bool TryParceSetOfFilters(string filters, string propertiesSeparator, Dictionary<string, List<object>> destination)
+        private static bool TryParseSetOfFilters(string filters, string propertiesSeparator, Dictionary<string, List<object>> destination)
         {
             string[] filtersKeyValuePairs = filters.Split(propertiesSeparator, StringSplitOptions.RemoveEmptyEntries);
             bool parceResult = false;
             foreach (var item in filtersKeyValuePairs)
             {
-                parceResult = TryParceOneFilter(item, propertiesSeparator, destination);
+                parceResult = TryParseOneFilter(item, propertiesSeparator, destination);
                 if (!parceResult)
                 {
                     break;

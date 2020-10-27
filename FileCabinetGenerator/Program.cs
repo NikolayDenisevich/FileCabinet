@@ -13,12 +13,10 @@ namespace FileCabinetGenerator
             "\n1. FileCabinetGenerator.exe --output-type=csv --output=d:\\data\\records.csv --records-amount=10000 --start-id=30." +
             "\n2. FileCabinetGenerator.exe -t xml -o c:\\users\\myuser\\records.xml -a 5000 -i 45.";
         private const string InvalidParameterMessage = "Invalid parameter for ";
-        private const string DefaultFolder = "C:\\cabinet\\generator";
-        private const int DescriptionParamaeterIndex = 2;
         private const int MaxRecordAmont = 1_000_000;
         private const int ExitCodeIncorrectParameters = -100500;
 
-        private static Tuple<string, Action<string, string>>[] commands = new Tuple<string, Action<string, string>>[]
+        private static readonly Tuple<string, Action<string, string>>[] commands = new Tuple<string, Action<string, string>>[]
         {
             new Tuple<string, Action<string, string>>("--output-type", SetOutputType),
             new Tuple<string, Action<string, string>>("-t", SetOutputType),

@@ -6,7 +6,7 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides Gender validator.
     /// </summary>
-    internal class GenderValidator : IRecordValidator<RecordArguments>
+    public class GenderValidator : IRecordValidator<RecordArguments>
     {
         /// <summary>
         /// Gets or sets valid character set.
@@ -14,39 +14,17 @@ namespace FileCabinetApp
         /// <value>
         /// Valid character set.
         /// </value>
-        public char[] CharSet { get; set; } = Array.Empty<char>();
-
-        /// <summary>
-        /// Gets or sets string representation of valid character set. Using for correct configuration load during serializing.
-        /// </summary>
-        /// <value>
-        /// String representation of valid character set valid character set.
-        /// </value>
-        public string Set
-        {
-            get
-            {
-                var builder = new StringBuilder();
-                foreach (var item in this.CharSet)
-                {
-                    builder.Append(item);
-                }
-
-                return builder.ToString();
-            }
-
-            set
-            {
-                this.CharSet = value.ToCharArray();
-            }
-        }
+        public string CharSet { get; set; }
 
         /// <summary>
         /// Validates Gender argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null. -or- arguments.City is null.</exception>
+        /// <exception cref="ArgumentException">arguments.Gender in not a member of valid characters.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             bool isValid = false;
             foreach (var item in this.CharSet)
             {

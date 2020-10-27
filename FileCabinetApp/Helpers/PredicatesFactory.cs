@@ -2,12 +2,20 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 
 namespace FileCabinetApp
 {
+    /// <summary>
+    /// Representes predicates factory class.
+    /// </summary>
     public static class PredicatesFactory
     {
+        /// <summary>
+        /// Creates predicate using specified filters.
+        /// </summary>
+        /// <param name="filtersDictionary">The dictionary that contains key as names of FileCabinetRecord properties and set of values.</param>
+        /// <param name="isAndAlso">true if predicates combining method is AndAlso, false if predicates combining method is OrElse.</param>
+        /// <returns>A condition.</returns>
         internal static Func<FileCabinetRecord, bool> GetPredicate(Dictionary<string, List<object>> filtersDictionary, bool isAndAlso)
         {
             if (filtersDictionary.Count is 0 || filtersDictionary is null)
@@ -84,7 +92,6 @@ namespace FileCabinetApp
             ParameterExpression record = Expression.Parameter(recordType, nameof(FileCabinetRecord));
             var valueType = value.GetType();
             Expression left;
-
             if (valueType.Equals(typeof(char)))
             {
                 var leftPropertyGet = Expression.Property(record, propertyGet);

@@ -15,17 +15,20 @@ namespace FileCabinetApp.CommandHandlers
         /// Initializes a new instance of the <see cref="PurgeCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public PurgeCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
-            service = fileCabinetService;
+            service = fileCabinetService ?? throw new ArgumentNullException(nameof(fileCabinetService));
         }
 
         /// <summary>
         /// Handles the 'purge' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(PurgeCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 Purge();
@@ -38,14 +41,14 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void Purge()
         {
-            (int, int) purgeResult = service.Purge();
-            if (purgeResult.Item1 == -1)
+            int purgedRecords = service.Purge(out int totalRecords);
+            if (purgedRecords == -1)
             {
                 Console.WriteLine("There is nothing to purge.");
             }
             else
             {
-                Console.WriteLine($"Data file processing is completed: {purgeResult.Item1} of {purgeResult.Item2} records were purged.");
+                Console.WriteLine($"Data file processing is completed: {purgedRecords} of {totalRecords} records were purged.");
             }
         }
     }
