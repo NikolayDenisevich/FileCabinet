@@ -36,6 +36,8 @@ namespace FileCabinetApp
             new Tuple<string, Action<string>>("find", Find),
             new Tuple<string, Action<string>>("export", Export),
             new Tuple<string, Action<string>>("import", Import),
+            new Tuple<string, Action<string>>("remove", Remove),
+            new Tuple<string, Action<string>>("purge", Purge),
         };
 
         private static Tuple<string, string, Action<string, string>>[] properties = new Tuple<string, string, Action<string, string>>[]
@@ -59,6 +61,9 @@ namespace FileCabinetApp
             new string[] { "edit", "edits an existing record.", "The 'edit 1' edits an existing record #1." },
             new string[] { "find", "finds records with a scpecified properties: 'firstname', 'lastname' or 'dateofbirth'.", "The 'find firstname Petr' serches all records with firstname Petr." },
             new string[] { "export", "exports records to scpecified file: 'csv', 'xml'.", "The 'export csv filename.csv' export all records to 'filename.csv' file." },
+            new string[] { "import", "imports records from scpecified file: 'csv', 'xml'.", @"The 'import csv c:\folder\filename.csv' export all records from 'c:\folder\filename.csv' file." },
+            new string[] { "remove", "removes record whith scpecified id", "The 'remove 1' removes an existing record #1." },
+            new string[] { "purge", "purges the data file", "The 'purge' command removes all empty entries and defragment the data file (it works only for FileSystem storage.)." },
         };
 
         /// <summary>
@@ -142,7 +147,8 @@ namespace FileCabinetApp
         private static void Stat(string parameters)
         {
             var recordsCount = Program.fileCabinetService.GetStat();
-            Console.WriteLine($"{recordsCount} record(s).");
+            Console.WriteLine($"{recordsCount.Item1} record(s).");
+            Console.WriteLine($"{recordsCount.Item2} removed record(s).");
         }
 
         private static void Create(string parameters)
@@ -269,6 +275,52 @@ namespace FileCabinetApp
             ParametersParser(parameters, startIndexFromTupleForImportMethod, countMethodsInTupleForImportMethod);
         }
 
+        private static void Remove(string parameters)
+        {
+            int id = FindRecordId(parameters);
+            if (id > 0)
+            {
+                fileCabinetService.Remove(id);
+                Console.WriteLine($"Record #{id} is removed.");
+            }
+        }
+
+        private static void Purge(string parameters)
+        {
+            (int, int) purgeResult = fileCabinetService.Purge();
+            if (purgeResult.Item1 == -1)
+            {
+                Console.WriteLine("There is nothing to purge.");
+            }
+            else
+            {
+                Console.WriteLine($"Data file processing is completed: {purgeResult.Item1} of {purgeResult.Item2} records were purged.");
+            }
+        }
+
+        private static int FindRecordId(string parameters)
+        {
+            int id;
+            bool isParsed = int.TryParse(parameters, out id);
+            if (!isParsed || id == 0)
+            {
+                Console.WriteLine($"Record doesn't exists.");
+                return -1;
+            }
+            else
+            {
+                IReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.GetRecords();
+                bool isExists = IsExistsRecordIdInList(id, readonlyCollection);
+                if (!isExists)
+                {
+                    Console.WriteLine($"Record #{id} doesn't exists.");
+                    return -1;
+                }
+            }
+
+            return id;
+        }
+
         private static void ImportFromCsv(string propertyFullName, string value)
         {
             if (string.IsNullOrEmpty(value))
@@ -339,7 +391,7 @@ namespace FileCabinetApp
                 return;
             }
 
-            if (fileCabinetService.GetStat() is 0)
+            if (fileCabinetService.GetStat().Item1 is 0)
             {
                 Console.WriteLine("There is nothing to export. Records count is 0.");
                 return;
@@ -400,7 +452,7 @@ namespace FileCabinetApp
                 return;
             }
 
-            if (fileCabinetService.GetStat() is 0)
+            if (fileCabinetService.GetStat().Item1 is 0)
             {
                 Console.WriteLine("There is nothing to export. Records count is 0.");
                 return;
@@ -583,6 +635,7 @@ namespace FileCabinetApp
         {
             if (args is null || args.Length == 0)
             {
+                // TODO: CreateFileCabinerFileSystemServiceInstance();
                 CreateFileCabinerDefaultServiceInstance();
             }
             else
