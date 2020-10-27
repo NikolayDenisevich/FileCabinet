@@ -14,19 +14,14 @@ namespace FileCabinetApp.CommandHandlers
         private const string ExportCommand = "export";
         private const string CsvPropetyName = "csv";
         private const string XmlPropetyName = "xml";
-
-        private static Tuple<string, Action<string, string>>[] properties = new Tuple<string, Action<string, string>>[]
-        {
-            new Tuple<string, Action<string, string>>(CsvPropetyName, ExportInFile),
-            new Tuple<string,  Action<string, string>>(XmlPropetyName, ExportInFile),
-        };
-
+        private static readonly string[] PropertiesNew = new string[] { CsvPropetyName, XmlPropetyName };
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> service;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExportCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public ExportCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
             service = fileCabinetService;
@@ -36,11 +31,17 @@ namespace FileCabinetApp.CommandHandlers
         /// Handles the 'export' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(ExportCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                Parser.ParceParameters(properties, commandRequest.Parameters, ' ');
+                string property = commandRequest.Parameters;
+                if (Parser.TryParseImportExportParameters(PropertiesNew, ref property, out string propertyParameters))
+                {
+                    ExportInFile(property, propertyParameters);
+                }
             }
             else
             {
@@ -48,54 +49,49 @@ namespace FileCabinetApp.CommandHandlers
             }
         }
 
-        private static void ExportInFile(string propertyName, string value)
+        private static void ExportInFile(string propertyName, string parameters)
         {
-            if (string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(parameters))
             {
                 Console.WriteLine($"'{propertyName}' value is empty.");
                 return;
             }
 
-            if (service.GetStat().Item1 is 0)
+            if (service.GetStat(out int _) is 0)
             {
                 Console.WriteLine("There is nothing to export. Records count is 0.");
                 return;
             }
 
-            string filePath = value.Trim();
+            string filePath = parameters.Trim();
             string directoryPath = Path.GetDirectoryName(filePath);
-            bool isRewriteTrue;
             if (!Path.IsPathRooted(filePath))
             {
                 filePath = Path.Combine(Directory.GetCurrentDirectory(), filePath);
-                if (File.Exists(filePath))
-                {
-                    isRewriteTrue = ReadInputForRewrite(filePath);
-                    if (!isRewriteTrue)
-                    {
-                        return;
-                    }
-                }
-
-                SaveToFile(filePath, propertyName);
+                CheckFileAndSave(filePath, propertyName);
             }
             else if (Directory.Exists(directoryPath))
             {
-                if (File.Exists(filePath))
-                {
-                    isRewriteTrue = ReadInputForRewrite(filePath);
-                    if (!isRewriteTrue)
-                    {
-                        return;
-                    }
-                }
-
-                SaveToFile(filePath, propertyName);
+                CheckFileAndSave(filePath, propertyName);
             }
             else
             {
                 Console.WriteLine($"Export failed: can't open file {filePath}.");
             }
+        }
+
+        private static void CheckFileAndSave(string filePath, string propertyName)
+        {
+            if (File.Exists(filePath))
+            {
+                bool isRewriteTrue = ReadInputForRewrite(filePath);
+                if (!isRewriteTrue)
+                {
+                    return;
+                }
+            }
+
+            SaveToFile(filePath, propertyName);
         }
 
         private static bool ReadInputForRewrite(string filePath)
@@ -135,32 +131,20 @@ namespace FileCabinetApp.CommandHandlers
         {
             var records = new ReadOnlyCollection<FileCabinetRecord>(service.GetRecords(null, null).ToList());
             FileCabinetServiceSnapshot snapshot = service.MakeSnapshot(records);
-            using (var streamWriter = new StreamWriter(filePath, false, Encoding.Unicode))
-            {
-                SelectDestination(propertyName, snapshot, streamWriter);
-                Console.WriteLine($"All records are exported to file {filePath}.");
-            }
+            using var streamWriter = new StreamWriter(filePath, false, Encoding.Unicode);
+            SelectDestination(propertyName, snapshot, streamWriter);
+            Console.WriteLine($"All records are exported to file {filePath}.");
         }
 
         private static void SelectDestination(string propertyName, FileCabinetServiceSnapshot snapshot, StreamWriter writer)
         {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-            string propertyInLower = propertyName.ToLowerInvariant();
-#pragma warning restore CA1308 // Normalize strings to uppercase
-            switch (propertyInLower)
+            Tuple<string, Action<StreamWriter>>[] savers = new Tuple<string, Action<StreamWriter>>[]
             {
-                case CsvPropetyName:
-                    {
-                        snapshot.SaveToCsv(writer);
-                        break;
-                    }
-
-                case XmlPropetyName:
-                    {
-                        snapshot.SaveToXml(writer);
-                        break;
-                    }
-            }
+                    new Tuple<string, Action<StreamWriter>>(CsvPropetyName, snapshot.SaveToCsv),
+                    new Tuple<string,  Action<StreamWriter>>(XmlPropetyName, snapshot.SaveToXml),
+            };
+            int index = Array.FindIndex(savers, s => s.Item1.Equals(propertyName, StringComparison.InvariantCultureIgnoreCase));
+            savers[index].Item2(writer);
         }
     }
 }

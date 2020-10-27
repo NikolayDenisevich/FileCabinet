@@ -4,18 +4,24 @@ using System.Text;
 
 namespace FileCabinetApp
 {
+    /// <summary>
+    /// Representes Print class.
+    /// </summary>
     public static class Print
     {
-        private const string HintMessage = "You should use this command with valid parameters and values. Enter 'help <commandname>' to get help.";
-
         /// <summary>
         /// Prints hint about parametrized commnds using.
         /// </summary>
         internal static void ParametrizedCommandHint()
         {
+            const string HintMessage = "You should use this command with valid parameters and values. Enter 'help <commandname>' to get help.";
             Console.WriteLine(HintMessage);
         }
 
+        /// <summary>
+        /// Prints message about missed property.
+        /// </summary>
+        /// <param name="propertyName">The name of missed property.</param>
         internal static void MissedPropertyInfo(string propertyName)
         {
             Console.WriteLine($"There is no '{propertyName}' property.");
@@ -53,8 +59,15 @@ namespace FileCabinetApp
             Console.WriteLine($"Mismatch of parameters and (or) values: '({parameters})' values ({values}) or comma using for float numbers");
         }
 
+        /// <summary>
+        /// Prints message about operation result.
+        /// </summary>
+        /// <param name="operatedRecords">The set of records with which the operation was performed.</param>
+        /// <param name="operationName">The name of operation.</param>
+        /// <exception cref="ArgumentNullException">Thrown when operatedRecords is null.</exception>
         internal static void OperationResult(IEnumerable<FileCabinetRecord> operatedRecords, string operationName)
         {
+            operatedRecords = operatedRecords ?? throw new ArgumentNullException(nameof(operatedRecords));
             const int ExtraSymbolsToRemoveBuidlerOffsetFromEnd = 2;
             const int ExtraSymbolsBuidlerCount = 2;
             var enumerator = operatedRecords.GetEnumerator();
@@ -78,70 +91,119 @@ namespace FileCabinetApp
             Console.WriteLine(builder);
         }
 
+        /// <summary>
+        /// Prints  validation rules usage hint.
+        /// </summary>
         internal static void ValidationRulesUsageHint()
         {
             Console.WriteLine("<-v> parameter value is wrong or empty. Use <-v custom> or <--validation-rules=custom> " +
                 "if you want to use custom validation rules (custom validation rules are for memory storage only.).");
         }
 
+        /// <summary>
+        /// Prints storage usage hint.
+        /// </summary>
         internal static void StorageUsageHint()
         {
             Console.WriteLine("<-s> parameter value is wrong or empty. Use <-s file> or <--storage=file> if you want to use filesystem storage.");
         }
 
+        /// <summary>
+        /// Prints message indicates that stopwatch is activatd.
+        /// </summary>
         internal static void StopWathActivated()
         {
             Console.WriteLine("StopWatch activated.");
         }
 
+        /// <summary>
+        /// Prints message indicates that logging is activatd.
+        /// </summary>
         internal static void LoggingActivated()
         {
             Console.WriteLine("Logging activated.");
         }
 
-        internal static void UsingServerValidationRules(string serverValidationType)
+        /// <summary>
+        /// Prints message whith type of service validation rules.
+        /// </summary>
+        /// <param name="serviceValidationType">The validation rules type.</param>
+        internal static void UsingServiceValidationRules(string serviceValidationType)
         {
-            Console.WriteLine($"Using {serverValidationType} validation rules.");
+            Console.WriteLine($"Using {serviceValidationType} validation rules.");
         }
 
+        /// <summary>
+        /// Prints message whith type of storage.
+        /// </summary>
+        /// <param name="storageType">The data storage type.</param>
         internal static void UsingStorageType(string storageType)
         {
             Console.WriteLine($"Using {storageType} storage.");
         }
 
+        /// <summary>
+        /// Prints message about missed command.
+        /// </summary>
+        /// <param name="command">Missed command.</param>
         internal static void MissedCommandInfo(string command)
         {
             Console.WriteLine($"There is no '{command}' command.");
             Console.WriteLine();
         }
 
+        /// <summary>
+        /// Prints hint about parametless command using.
+        /// </summary>
+        /// <param name="commandName">Command name.</param>
         internal static void UseCommandWithoutParameters(string commandName)
         {
             Console.WriteLine($"Please, use '{commandName}' command without any parameters.");
         }
 
-        internal static void RecordDoesntExists(string propertyName, string value)
-        {
-            Console.WriteLine($"There is no records with {propertyName} '{value}'");
-        }
-
+        /// <summary>
+        /// Prints message about repeated property.
+        /// </summary>
+        /// <param name="propertyName">The property name.</param>
         internal static void RepeatedProperty(string propertyName)
         {
-            Console.WriteLine($"property '{propertyName}' declared several times.");
+            Console.WriteLine($"The property '{propertyName}' declared several times.");
         }
 
+        /// <summary>
+        /// Prints message about the absence of records with the specified filters.
+        /// </summary>
+        /// <param name="filters">The specified filters string representation.</param>
         internal static void NoRecordsWithFilters(string filters)
         {
             Console.WriteLine($"No records found using the specified filter(s) '{filters}'");
         }
 
+        /// <summary>
+        /// Prints message about the absence of records.
+        /// </summary>
+        internal static void NoRecords()
+        {
+            Console.WriteLine($"There is no records in the list.");
+        }
+
+        /// <summary>
+        /// Prints a message about the impossibility to assign a value to the specified property.
+        /// </summary>
+        /// <param name="propertyName">The property name.</param>
         internal static void CannotSetValueToProperty(string propertyName)
         {
             Console.WriteLine($"Sorry, but you cannot set value to {propertyName}");
         }
 
+        /// <summary>
+        /// Prints a message about the most similar commands.
+        /// </summary>
+        /// <param name="commands">The most similar commands collection.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commands is null.</exception>
         internal static void MostSimilarCommands(IEnumerable<string> commands)
         {
+            commands = commands ?? throw new ArgumentNullException(nameof(commands));
             var enumerator = commands.GetEnumerator();
             enumerator.MoveNext();
             var command = enumerator.Current;

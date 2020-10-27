@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using FileCabinetApp.CommandHandlers;
-using FileCabinetApp.Interfaces;
 using FileCabinetApp.Validators;
 using Microsoft.Extensions.Configuration;
 
@@ -15,10 +13,9 @@ namespace FileCabinetApp
     {
         private const string DeveloperName = "Nikolay Denisevich";
         private const string HintMessage = "Enter your command, or enter 'help' to get help.";
-        private const string DefaultRootDirectory = @"C:\Cabinet"; // TODO: Fix this path.
         private const string DefaultBinaryFileName = "cabinet-records.db";
         private const string ValidationConfigFileName = "validation-rules.json";
-
+        private static readonly string DefaultRootDirectory = Directory.GetCurrentDirectory();
         private static bool isRunning = true;
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService;
         private static IRecordValidator<RecordArguments> recordValidator;
@@ -89,7 +86,7 @@ namespace FileCabinetApp
 
                     case "-V":
                         {
-                            string validationType = GetValidationValue(args, ++index);
+                            string validationType = GetValidationRulesType(args, ++index);
                             var service = CreateFileCabinetMemoryServiceInstance(validationType);
                             fileCabinetService = CheckNextArg(args, ++index, service);
                             break;
@@ -153,7 +150,7 @@ namespace FileCabinetApp
             return nextService;
         }
 
-        private static string GetValidationValue(string[] args, int index)
+        private static string GetValidationRulesType(string[] args, int index)
         {
             const string DefaultServerValidationType = "DEFAULT";
             const string CustomServerValidationType = "CUSTOM";
@@ -211,7 +208,7 @@ namespace FileCabinetApp
         {
             const string serverValidationType = "default";
             const string storageType = "filesystem";
-            Print.UsingServerValidationRules(serverValidationType);
+            Print.UsingServiceValidationRules(serverValidationType);
             Print.UsingStorageType(storageType);
             InitializeValidators(serverValidationType);
             string fullPath = Path.Combine(DefaultRootDirectory, DefaultBinaryFileName);
@@ -231,7 +228,7 @@ namespace FileCabinetApp
             }
             else
             {
-                Console.WriteLine("Configuration file not found. Application will be closed.");
+                Console.WriteLine("Configuration file not found. The application will be closed.");
                 Environment.Exit(-1);
             }
         }
@@ -239,7 +236,7 @@ namespace FileCabinetApp
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> CreateFileCabinetMemoryServiceInstance(string serverValidationType)
         {
             const string storageType = "memory";
-            Print.UsingServerValidationRules(serverValidationType);
+            Print.UsingServiceValidationRules(serverValidationType);
             Print.UsingStorageType(storageType);
             InitializeValidators(serverValidationType);
             return new FileCabinetMemoryService(recordValidator);
@@ -247,8 +244,7 @@ namespace FileCabinetApp
 
         private static void InitializeValidators(string serverValidationType)
         {
-            var defaultSection = configuration.GetSection(serverValidationType);
-            var validationRules = new ValidationRulesContainer(defaultSection);
+            var validationRules = configuration.GetSection(serverValidationType).Get<ValidationRulesContainer>();
             recordValidator = new ValidatorBuilder().CreateValidator(validationRules);
             inputValidator = new InputValidator(validationRules);
             Parser.InputValidator = inputValidator;
@@ -256,7 +252,6 @@ namespace FileCabinetApp
 
         private static ICommandHandler CreateCommandHandlers()
         {
-            IRecordPrinter<FileCabinetRecord> recordPrinter = new DefaultRecordPrinter();
             var insertHandler = new InsertCommandHandler(fileCabinetService, inputValidator);
             var createHandler = new CreateCommandHandler(fileCabinetService, inputValidator);
             var exitHandler = new ExitCommandHandler(r => isRunning = r);

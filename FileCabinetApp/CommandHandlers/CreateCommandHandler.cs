@@ -15,19 +15,23 @@ namespace FileCabinetApp.CommandHandlers
         /// Initializes a new instance of the <see cref="CreateCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
-        /// <param name="validator">InputValidator instance.</param>
-        public CreateCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService, InputValidator validator)
+        /// <param name="inputValidator">InputValidator instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when inputValidator is null.</exception>
+        public CreateCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService, InputValidator inputValidator)
         {
-            this.inputValidator = validator;
-            this.service = fileCabinetService;
+            this.service = fileCabinetService ?? throw new ArgumentNullException(nameof(fileCabinetService));
+            this.inputValidator = inputValidator ?? throw new ArgumentNullException(nameof(inputValidator));
         }
 
         /// <summary>
         /// Handles the 'create' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(CreateCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 if (!string.IsNullOrEmpty(commandRequest.Parameters))

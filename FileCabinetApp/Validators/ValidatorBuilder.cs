@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace FileCabinetApp.Validators
 {
@@ -100,7 +99,7 @@ namespace FileCabinetApp.Validators
         /// </summary>
         /// <param name="chars">A set of valid chars.</param>
         /// <returns>A reference to this instance after the add operation has completed.</returns>
-        public ValidatorBuilder ValidateGender(params char[] chars)
+        public ValidatorBuilder ValidateGender(string chars)
         {
             this.validators.Add(new GenderValidator { CharSet = chars });
             return this;

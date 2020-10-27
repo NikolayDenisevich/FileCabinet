@@ -5,7 +5,7 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides salary validator.
     /// </summary>
-    internal class SalaryValidator : IRecordValidator<RecordArguments>
+    public class SalaryValidator : IRecordValidator<RecordArguments>
     {
         /// <summary>
         /// Gets or sets Min salary value.
@@ -27,8 +27,11 @@ namespace FileCabinetApp
         /// Validates Salary argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">arguments.Salary is not in the range from Min to Max.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             if (arguments.Salary < this.Min || arguments.Salary > this.Max)
             {
                 throw new ArgumentOutOfRangeException($"{nameof(arguments.Salary)} range is {this.Min}..{this.Max}");

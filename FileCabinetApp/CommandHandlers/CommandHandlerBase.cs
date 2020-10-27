@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace FileCabinetApp.CommandHandlers
 {
@@ -11,7 +9,10 @@ namespace FileCabinetApp.CommandHandlers
     /// </summary>
     internal class CommandHandlerBase : ICommandHandler
     {
-        private static readonly string[] Commands = new string[] { "help", "exit", "stat", "create", "export", "import", "purge", "insert", "delete", "update", "select" };
+        private static readonly string[] Commands = new string[]
+        {
+            "help", "exit", "stat", "create", "export", "import", "purge", "insert", "delete", "update", "select",
+        };
 
         private ICommandHandler nextHandler;
 
@@ -30,8 +31,10 @@ namespace FileCabinetApp.CommandHandlers
         /// Handles command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public virtual void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (this.nextHandler != null)
             {
                 this.nextHandler.Handle(commandRequest);

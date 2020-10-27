@@ -5,7 +5,7 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides City validator.
     /// </summary>
-    internal class CityValidator : IRecordValidator<RecordArguments>
+    public class CityValidator : IRecordValidator<RecordArguments>
     {
         /// <summary>
         /// Gets or sets minimum amount of characters.
@@ -27,12 +27,12 @@ namespace FileCabinetApp
         /// Validates City argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null. -or- arguments.City is null.</exception>
+        /// <exception cref="ArgumentException">arguments.City.Length should be from Min to Max. arguments.City should not consist only of white-spaces characters.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
-            if (arguments.City is null)
-            {
-                throw new ArgumentNullException($"{nameof(arguments.City)} is null");
-            }
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
+            arguments.City = arguments.City ?? throw new ArgumentException($"{nameof(arguments.City)}");
 
             if (arguments.City.Length < this.Min || arguments.City.Length > this.Max)
             {

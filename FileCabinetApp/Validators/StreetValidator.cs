@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Globalization;
 
 namespace FileCabinetApp
 {
     /// <summary>
     /// Provides default Street argument and input validator.
     /// </summary>
-    internal class StreetValidator : IRecordValidator<RecordArguments>
+    public class StreetValidator : IRecordValidator<RecordArguments>
     {
         /// <summary>
         /// Gets or sets minimum amount of characters.
@@ -30,12 +27,12 @@ namespace FileCabinetApp
         /// Validates Street argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null. -or- arguments.Street is null.</exception>
+        /// <exception cref="ArgumentException">arguments.Street.Length should be from Min to Max. arguments.Street should not consist only of white-spaces characters.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
-            if (arguments.Street is null)
-            {
-                throw new ArgumentNullException($"{nameof(arguments.Street)} is null");
-            }
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
+            arguments.Street = arguments.Street ?? throw new ArgumentNullException($"{nameof(arguments.Street)}");
 
             if (arguments.Street.Length < this.Min || arguments.Street.Length > this.Max)
             {

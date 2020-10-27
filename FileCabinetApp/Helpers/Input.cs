@@ -1,14 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 
 namespace FileCabinetApp
 {
+    /// <summary>
+    /// Representes Input class.
+    /// </summary>
     internal static class Input
     {
+        /// <summary>
+        /// Reads user input to create the FileCabinetRecord.
+        /// </summary>
+        /// <param name="validator">Input validator instance.</param>
+        /// <returns>Valid arguments for record creating.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
         internal static RecordArguments ReadArguments(InputValidator validator)
         {
+            validator = validator ?? throw new ArgumentNullException(nameof(validator));
             Console.Write("First Name: ");
             string firstName = ReadInput(StringsConverter, validator.ValidateStrings);
             Console.Write("Last Name: ");
@@ -49,8 +58,12 @@ namespace FileCabinetApp
         /// <param name="validator">Input data validator.</param>
         /// <param name="value">When this method returns, contains the value equivalent to the type of T contained in input, if the conversion succeeded, or default value if the conversion failed. The conversion fails if the input parameter is null, is an empty string (""), or does not contain a valid string representation of a T value. This parameter is passed uninitialized.</param>
         /// <returns>true if the input parameter was converted successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when converter is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
         internal static bool TryCheckInput<T>(string input, Func<string, Tuple<bool, string, T>> converter, Func<T, Tuple<bool, string>> validator, out T value)
         {
+            converter = converter ?? throw new ArgumentNullException(nameof(converter));
+            validator = validator ?? throw new ArgumentNullException(nameof(validator));
             var conversionResult = converter(input);
             if (!conversionResult.Item1)
             {
@@ -70,8 +83,21 @@ namespace FileCabinetApp
             return true;
         }
 
+        /// <summary>
+        /// Fills the RecordArguments instance with valid data.
+        /// </summary>
+        /// <param name="arguments">The RecordArguments instance.</param>
+        /// <param name="propertiesNameValuePairs">The dictionary that contains string representation arguments values.</param>
+        /// <param name="validator">The input validator instance.</param>
+        /// <returns>true if all the properties of RecordArguments was converted from dictionary and assigned successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when propertiesNameValuePairs is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
         internal static bool TryToUpdateArgumentsWithId(RecordArguments arguments, Dictionary<string, string> propertiesNameValuePairs, InputValidator validator)
         {
+            arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
+            propertiesNameValuePairs = propertiesNameValuePairs ?? throw new ArgumentNullException(nameof(propertiesNameValuePairs));
+            validator = validator ?? throw new ArgumentNullException(nameof(validator));
             bool result = true;
             if (propertiesNameValuePairs[nameof(FileCabinetRecord.Id)] != null)
             {
@@ -81,14 +107,27 @@ namespace FileCabinetApp
 
             if (result)
             {
-                result &= TryToUpdateArguments(arguments, propertiesNameValuePairs, validator);
+                result &= TryToUpdateArgumentsWhithoutId(arguments, propertiesNameValuePairs, validator);
             }
 
             return result;
         }
 
-        internal static bool TryToUpdateArguments(RecordArguments arguments, Dictionary<string, string> propertiesNameValuePairs, InputValidator validator)
+        /// <summary>
+        /// Fills the RecordArguments instance with valid data exept Id property.
+        /// </summary>
+        /// <param name="arguments">The RecordArguments instance.</param>
+        /// <param name="propertiesNameValuePairs">The dictionary that contains string representation arguments values.</param>
+        /// <param name="validator">The input validator instance.</param>
+        /// <returns>true if properties of RecordArguments was converted from dictionary and assigned successfully; otherwise, false.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when propertiesNameValuePairs is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
+        internal static bool TryToUpdateArgumentsWhithoutId(RecordArguments arguments, Dictionary<string, string> propertiesNameValuePairs, InputValidator validator)
         {
+            arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
+            propertiesNameValuePairs = propertiesNameValuePairs ?? throw new ArgumentNullException(nameof(propertiesNameValuePairs));
+            validator = validator ?? throw new ArgumentNullException(nameof(validator));
             bool result = true;
             if (propertiesNameValuePairs[nameof(FileCabinetRecord.FirstName)] != null)
             {

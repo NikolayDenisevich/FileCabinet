@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using FileCabinetApp.Interfaces;
 
 namespace FileCabinetApp
 {
@@ -37,7 +36,7 @@ namespace FileCabinetApp
             this.timer.Start();
             int result = this.fileCabinetService.CreateRecord(arguments);
             this.timer.Stop();
-            this.ShowElapsedTime("CreateRecord");
+            this.ShowElapsedTime(nameof(this.CreateRecord));
             return result;
         }
 
@@ -48,10 +47,11 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
         public void EditRecord(RecordArguments arguments)
         {
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             this.timer.Start();
             this.fileCabinetService.EditRecord(arguments);
             this.timer.Stop();
-            this.ShowElapsedTime("EditRecord");
+            this.ShowElapsedTime(nameof(this.EditRecord));
         }
 
         /// <summary>
@@ -65,20 +65,21 @@ namespace FileCabinetApp
             this.timer.Start();
             var result = this.fileCabinetService.GetRecords(filters, predicate);
             this.timer.Stop();
-            this.ShowElapsedTime("GetRecords");
+            this.ShowElapsedTime(nameof(this.GetRecords));
             return result;
         }
 
         /// <summary>
         /// Returns records count. Shows elapsed execution time.
         /// </summary>
+        /// <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
         /// <returns>Records count.</returns>
-        public (int, int) GetStat()
+        public int GetStat(out int removedRecordsCount)
         {
             this.timer.Start();
-            var result = this.fileCabinetService.GetStat();
+            var result = this.fileCabinetService.GetStat(out removedRecordsCount);
             this.timer.Stop();
-            this.ShowElapsedTime("GetStat");
+            this.ShowElapsedTime(nameof(this.GetStat));
             return result;
         }
 
@@ -94,20 +95,21 @@ namespace FileCabinetApp
             this.timer.Start();
             var result = this.fileCabinetService.MakeSnapshot(records);
             this.timer.Stop();
-            this.ShowElapsedTime("MakeSnapshot");
+            this.ShowElapsedTime(nameof(this.MakeSnapshot));
             return result;
         }
 
         /// <summary>
-        /// Pugres the data file. Shows elapsed execution time.
+        /// Pugres the data file.
         /// </summary>
-        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
-        public (int, int) Purge()
+        /// <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+        /// <returns>Purged records count.</returns>
+        public int Purge(out int totalRecordsBeforePurgeCount)
         {
             this.timer.Start();
-            var result = this.fileCabinetService.Purge();
+            var result = this.fileCabinetService.Purge(out totalRecordsBeforePurgeCount);
             this.timer.Stop();
-            this.ShowElapsedTime("Purge");
+            this.ShowElapsedTime(nameof(this.Purge));
             return result;
         }
 
@@ -120,7 +122,7 @@ namespace FileCabinetApp
             this.timer.Start();
             this.fileCabinetService.Remove(recordId);
             this.timer.Stop();
-            this.ShowElapsedTime("Remove");
+            this.ShowElapsedTime(nameof(this.Remove));
         }
 
         /// <summary>
@@ -135,14 +137,18 @@ namespace FileCabinetApp
             this.timer.Start();
             var result = this.fileCabinetService.Restore(snapshot);
             this.timer.Stop();
-            this.ShowElapsedTime("Restore");
+            this.ShowElapsedTime(nameof(this.Restore));
             return result;
         }
 
         private void ShowElapsedTime(string methodName)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"{methodName} method execution duration is {this.timer.ElapsedTicks} ticks ({this.timer.ElapsedMilliseconds} milliseconds)");
+            string executionResult = new StringBuilder()
+                .Append($"{methodName} method execution duration is {this.timer.ElapsedTicks} ticks ")
+                .Append($"({this.timer.ElapsedMilliseconds} milliseconds).")
+                .ToString();
+            Console.WriteLine(executionResult);
             Console.ForegroundColor = ConsoleColor.Gray;
         }
     }

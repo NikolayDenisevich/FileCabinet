@@ -6,8 +6,10 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides DateOfBirth validator.
     /// </summary>
-    internal class DateOfBirthValidator : IRecordValidator<RecordArguments>
+    public class DateOfBirthValidator : IRecordValidator<RecordArguments>
     {
+        private const string DatePattern = "dd/MM/yyyy";
+
         /// <summary>
         /// Gets or sets minimum date.
         /// </summary>
@@ -32,7 +34,7 @@ namespace FileCabinetApp
         /// </value>
         public string From
         {
-            get => this.DateFrom.ToString("dd/MM/yyyy", DateTimeFormatInfo.InvariantInfo);
+            get => this.DateFrom.ToString(DatePattern, DateTimeFormatInfo.InvariantInfo);
 
             set
             {
@@ -50,7 +52,7 @@ namespace FileCabinetApp
         /// </value>
         public string To
         {
-            get => this.DateTo.ToString("dd/MM/yyyy", DateTimeFormatInfo.InvariantInfo);
+            get => this.DateTo.ToString(DatePattern, DateTimeFormatInfo.InvariantInfo);
 
             set
             {
@@ -64,11 +66,14 @@ namespace FileCabinetApp
         /// Validates DateOfBirth argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null. -or- arguments.City is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">arguments.DateOfBirth should be more than DateFrom and not more than DateTo or invalid date format input.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             if (arguments.DateOfBirth < this.DateFrom || arguments.DateOfBirth >= this.DateTo)
             {
-                throw new ArgumentException($"{nameof(arguments.DateOfBirth)} should be more than {this.DateFrom.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} and not more than {this.DateTo.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} or invalid date format input");
+                throw new ArgumentOutOfRangeException($"{nameof(arguments.DateOfBirth)} should be more than {this.DateFrom.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} and not more than {this.DateTo.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} or invalid date format input");
             }
         }
     }

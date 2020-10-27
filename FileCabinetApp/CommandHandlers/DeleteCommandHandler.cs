@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace FileCabinetApp.CommandHandlers
 {
@@ -19,20 +17,23 @@ namespace FileCabinetApp.CommandHandlers
         /// Initializes a new instance of the <see cref="DeleteCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public DeleteCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
-            service = fileCabinetService;
+            service = fileCabinetService ?? throw new ArgumentNullException(nameof(fileCabinetService));
         }
 
         /// <summary>
         /// Handles the 'delete' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(DeleteCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                DeleteNew(commandRequest.Parameters);
+                Delete(commandRequest.Parameters);
             }
             else
             {
@@ -40,7 +41,7 @@ namespace FileCabinetApp.CommandHandlers
             }
         }
 
-        private static void DeleteNew(string parameters)
+        private static void Delete(string parameters)
         {
             bool result = IsCorrectWhereParameter(parameters);
             if (!result)
@@ -48,31 +49,19 @@ namespace FileCabinetApp.CommandHandlers
                 return;
             }
 
-            parameters = parameters.Replace(WhereLiteral, string.Empty, StringComparison.InvariantCultureIgnoreCase).Trim();
-            var filtersDictionary = new Dictionary<string, List<object>>(StringComparer.InvariantCultureIgnoreCase);
-            result = Parser.TryParceFilters(parameters, filtersDictionary, out bool isAndAlsoCombineMethod);
+            string filters = parameters.Replace(WhereLiteral, string.Empty, StringComparison.InvariantCultureIgnoreCase).Trim();
+            result = TryGetFilteredCollection(filters, service, out IEnumerable<FileCabinetRecord> records);
             if (!result)
             {
                 return;
             }
 
-            var filtersPredicate = PredicatesFactory.GetPredicate(filtersDictionary, isAndAlsoCombineMethod);
-            IEnumerable<FileCabinetRecord> records;
-            if (filtersPredicate is null)
+            if (records != null)
             {
-                return;
+                var recordsToDelete = records.ToArray();
+                RemoveRecords(recordsToDelete);
+                Print.OperationResult(recordsToDelete, DeleteCommand);
             }
-
-            records = service.GetRecords(parameters, filtersPredicate);
-            if (!records.Any())
-            {
-                Print.NoRecordsWithFilters(parameters);
-                return;
-            }
-
-            var recordsToDelete = records.ToArray();
-            RemoveRecords(recordsToDelete);
-            Print.OperationResult(recordsToDelete, DeleteCommand);
         }
 
         private static void RemoveRecords(IEnumerable<FileCabinetRecord> records)

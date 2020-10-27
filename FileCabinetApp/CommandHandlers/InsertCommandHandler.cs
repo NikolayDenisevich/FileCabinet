@@ -13,25 +13,28 @@ namespace FileCabinetApp.CommandHandlers
         private const string ValuesLiteral = " values ";
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> service;
         private static InputValidator inputValidator;
-        private static Dictionary<string, string> selectorsDictionary;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InsertCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
         /// <param name="validator">InputValidator instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
         public InsertCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService, InputValidator validator)
         {
-            inputValidator = validator;
-            service = fileCabinetService;
+            service = fileCabinetService ?? throw new ArgumentNullException(nameof(fileCabinetService));
+            inputValidator = validator ?? throw new ArgumentNullException(nameof(validator));
         }
 
         /// <summary>
         /// Handles the 'insert' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(InsertCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 Insert(commandRequest.Parameters);
@@ -55,10 +58,10 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void Insert(string parameters)
         {
-            selectorsDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            Dictionary<string, string> selectorsDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
             InitializeDictionaryByPropertiesNames(selectorsDictionary);
             Parser.SetValueToAllDictionaryEntries<FileCabinetRecord>(selectorsDictionary, null);
-            bool result = TryFillPropertyPairs(parameters);
+            bool result = TryFillPropertyPairs(parameters, selectorsDictionary);
             if (!result)
             {
                 return;
@@ -83,7 +86,7 @@ namespace FileCabinetApp.CommandHandlers
             }
         }
 
-        private static bool TryFillPropertyPairs(string parameters)
+        private static bool TryFillPropertyPairs(string parameters, Dictionary<string, string> selectorsDictionary)
         {
             const int ParametersNamesIndex = 0;
             const int ParametersValuesIndex = 1;
@@ -112,7 +115,7 @@ namespace FileCabinetApp.CommandHandlers
 
             parametersNames = parametersNames.Trim('(', ')');
             parametersValues = parametersValues.Trim('(', ')');
-            isValid = TryFillPropetyPairs(parametersNames, parametersValues);
+            isValid = TryFillPropetyPairs(parametersNames, parametersValues, selectorsDictionary);
             if (!isValid)
             {
                 return false;
@@ -121,7 +124,7 @@ namespace FileCabinetApp.CommandHandlers
             return true;
         }
 
-        private static bool TryFillPropetyPairs(string parametersNames, string parametersValues)
+        private static bool TryFillPropetyPairs(string parametersNames, string parametersValues, Dictionary<string, string> selectorsDictionary)
         {
             const char PropertiesSeparator = ',';
             int validPropertiesCount = typeof(FileCabinetRecord).GetProperties().Length;

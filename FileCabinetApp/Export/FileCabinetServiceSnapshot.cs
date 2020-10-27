@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Xml;
 
 namespace FileCabinetApp
 {
@@ -20,7 +18,7 @@ namespace FileCabinetApp
         /// <param name="records">The FileCabinetRecords collection.</param>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
         public FileCabinetServiceSnapshot(IEnumerable<FileCabinetRecord> records) =>
-            this.records = records != null ? new List<FileCabinetRecord>(records) : throw new ArgumentNullException($"{nameof(records)} is null");
+            this.records = records != null ? new List<FileCabinetRecord>(records) : throw new ArgumentNullException($"{nameof(records)}");
 
         /// <summary>
         /// Gets records readonly collection.
@@ -37,8 +35,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when streamWriter is null.</exception>
         public void SaveToCsv(StreamWriter streamWriter)
         {
-            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)} is null");
-
+            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)}");
             FileCabinetRecordCsvWriter csvWriter = new FileCabinetRecordCsvWriter(streamWriter);
             foreach (var item in this.records)
             {
@@ -53,7 +50,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when writer is null.</exception>
         public void SaveToXml(StreamWriter streamWriter)
         {
-            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)} is null");
+            streamWriter = streamWriter ?? throw new ArgumentNullException($"{nameof(streamWriter)}");
             using var fileCabinetRecordXmlWriter = new FileCabinetRecordXmlWriter(streamWriter);
             foreach (var item in this.records)
             {
@@ -68,7 +65,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when streamReader is null.</exception>
         public void LoadFromCsv(StreamReader streamReader)
         {
-            streamReader = streamReader ?? throw new ArgumentNullException($"{nameof(streamReader)} is null");
+            streamReader = streamReader ?? throw new ArgumentNullException($"{nameof(streamReader)}");
             FileCabinetRecordCsvReader csvReader = new FileCabinetRecordCsvReader(streamReader);
             this.records = csvReader.ReadAll();
         }
@@ -80,7 +77,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when streamReader is null.</exception>
         internal void LoadFromXml(StreamReader streamReader)
         {
-            streamReader = streamReader ?? throw new ArgumentNullException($"{nameof(streamReader)} is null");
+            streamReader = streamReader ?? throw new ArgumentNullException($"{nameof(streamReader)}");
             FileCabinetRecordXmlReader xmlReader = new FileCabinetRecordXmlReader(streamReader);
             this.records = xmlReader.ReadAll();
         }

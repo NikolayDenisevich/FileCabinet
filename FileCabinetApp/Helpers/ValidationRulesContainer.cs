@@ -5,105 +5,70 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides container for FileCabinetRecord validators.
     /// </summary>
-    internal class ValidationRulesContainer
+    public class ValidationRulesContainer
     {
-        private const string FirstName = "firstname";
-        private const string LastName = "lastname";
-        private const string DateOfBirth = "dateOfBirth";
-        private const string ZipCode = "zipCode";
-        private const string City = "city";
-        private const string Street = "street";
-        private const string Salary = "salary";
-        private const string Gender = "gender";
-        private IConfigurationSection configSection;
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="ValidationRulesContainer"/> class.
-        /// </summary>
-        /// <param name="configSection">Configuration section.</param>
-        public ValidationRulesContainer(IConfigurationSection configSection)
-        {
-            this.configSection = configSection;
-            this.InitializeProperties();
-        }
-
-        /// <summary>
-        /// Gets FirstNameValidator instance.
+        /// Gets or sets FirstNameValidator instance.
         /// </summary>
         /// <value>
         /// FirstNameValidator instance.
         /// </value>
-        internal FirstNameValidator FirstNameValidator { get; private set; }
+        public FirstNameValidator FirstName { get; set; }
 
         /// <summary>
-        /// Gets LastNameValidator instance.
+        /// Gets or sets LastNameValidator instance.
         /// </summary>
         /// <value>
         /// LastNameValidator instance.
         /// </value>
-        internal LastNameValidator LastNameValidator { get; private set; }
+        public LastNameValidator LastName { get; set; }
 
         /// <summary>
-        /// Gets DateOfBirthValidator instance.
+        /// Gets or sets DateOfBirthValidator instance.
         /// </summary>
         /// <value>
         /// DateOfBirthValidator instance.
         /// </value>
-        internal DateOfBirthValidator DateOfBirthValidator { get; private set; }
+        public DateOfBirthValidator DateOfBirth { get; set; }
 
         /// <summary>
-        /// Gets ZipCodeValidator instance.
+        /// Gets or sets ZipCodeValidator instance.
         /// </summary>
         /// <value>
         /// ZipCodeValidator instance.
         /// </value>
-        internal ZipCodeValidator ZipCodeValidator { get; private set; }
+        public ZipCodeValidator ZipCode { get; set; }
 
         /// <summary>
-        /// Gets CityValidator instance.
+        /// Gets or sets CityValidator instance.
         /// </summary>
         /// <value>
         /// CityValidator instance.
         /// </value>
-        internal CityValidator CityValidator { get; private set; }
+        public CityValidator City { get; set; }
 
         /// <summary>
-        /// Gets StreetValidator instance.
+        /// Gets or sets StreetValidator instance.
         /// </summary>
         /// <value>
         /// StreetValidator instance.
         /// </value>
-        internal StreetValidator StreetValidator { get; private set; }
+        public StreetValidator Street { get; set; }
 
         /// <summary>
-        /// Gets SalaryValidator instance.
+        /// Gets or sets SalaryValidator instance.
         /// </summary>
         /// <value>
         /// SalaryValidator instance.
         /// </value>
-        internal SalaryValidator SalaryValidator { get; private set; }
+        public SalaryValidator Salary { get; set; }
 
         /// <summary>
-        /// Gets GenderValidator instance.
+        /// Gets or sets GenderValidator instance.
         /// </summary>
         /// <value>
         /// GenderValidator instance.
         /// </value>
-        internal GenderValidator GenderValidator { get; private set; }
-
-        /// <summary>
-        /// Initializes validators properties.
-        /// </summary>
-        public void InitializeProperties()
-        {
-            this.FirstNameValidator = this.configSection.GetSection(FirstName).Get<FirstNameValidator>();
-            this.LastNameValidator = this.configSection.GetSection(LastName).Get<LastNameValidator>();
-            this.DateOfBirthValidator = this.configSection.GetSection(DateOfBirth).Get<DateOfBirthValidator>();
-            this.ZipCodeValidator = this.configSection.GetSection(ZipCode).Get<ZipCodeValidator>();
-            this.CityValidator = this.configSection.GetSection(City).Get<CityValidator>();
-            this.StreetValidator = this.configSection.GetSection(Street).Get<StreetValidator>();
-            this.SalaryValidator = this.configSection.GetSection(Salary).Get<SalaryValidator>();
-            this.GenderValidator = this.configSection.GetSection(Gender).Get<GenderValidator>();
-        }
+        public GenderValidator Gender { get; set; }
     }
 }

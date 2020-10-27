@@ -5,7 +5,7 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides LastName validator.
     /// </summary>
-    internal class LastNameValidator : IRecordValidator<RecordArguments>
+    public class LastNameValidator : IRecordValidator<RecordArguments>
     {
         /// <summary>
         /// Gets or sets minimum amount of characters.
@@ -27,12 +27,12 @@ namespace FileCabinetApp
         /// Validates LastName argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null. -or- arguments.LastName is null.</exception>
+        /// <exception cref="ArgumentException">arguments.LastName.Length should be from Min to Max. arguments.LastName should not consist only of white-spaces characters.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
-            if (arguments.LastName is null)
-            {
-                throw new ArgumentNullException($"{nameof(arguments.LastName)} is null");
-            }
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
+            arguments.LastName = arguments.LastName ?? throw new ArgumentNullException($"{nameof(arguments.LastName)}");
 
             if (arguments.LastName.Length < this.Min || arguments.LastName.Length > this.Max)
             {

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using FileCabinetApp.Interfaces;
 
 namespace FileCabinetApp
 {
@@ -13,17 +12,9 @@ namespace FileCabinetApp
     public sealed class ServiceLogger : IFileCabinetService<FileCabinetRecord, RecordArguments>, IDisposable
     {
         private const string DefaultFileName = "log.txt";
-        private const string CreateRecordName = "CreateRecord";
-        private const string EditRecordName = "EditRecord";
-        private const string GetRecordsName = "GetRecords";
-        private const string GetStatName = "GetStat";
-        private const string MakeSnapshotName = "MakeSnapshot";
-        private const string PurgeName = "Purge";
-        private const string RemoveName = "Remove";
-        private const string RestoreName = "Restore";
-        private static string dateFormat = "dd/MM/yyyy";
-        private static string dateTimeFormat = "dd/MM/yyyy HH:mm:ss";
-        private static CultureInfo invatiantCulture = CultureInfo.InvariantCulture;
+        private const string DateFormat = "dd/MM/yyyy";
+        private const string DateTimeFormat = "dd/MM/yyyy HH:mm:ss";
+        private static readonly CultureInfo InvatiantCulture = CultureInfo.InvariantCulture;
         private readonly string filePath = Path.Combine(Directory.GetCurrentDirectory(), DefaultFileName);
         private readonly IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService;
         private readonly StreamWriter writer;
@@ -35,9 +26,9 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public ServiceLogger(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
-            this.fileCabinetService = fileCabinetService ?? throw new ArgumentNullException($"{nameof(fileCabinetService)} is null");
+            this.fileCabinetService = fileCabinetService ?? throw new ArgumentNullException($"{nameof(fileCabinetService)}");
             this.writer = new StreamWriter(this.filePath, true);
-            this.writer.WriteLine($"{DateTime.Now.ToString(dateFormat, invatiantCulture)}=============== Start logging ===================");
+            this.writer.WriteLine($"{DateTime.Now.ToString(DateFormat, InvatiantCulture)}=============== Start logging ===================");
             this.writer.Flush();
         }
 
@@ -49,10 +40,10 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
         public int CreateRecord(RecordArguments arguments)
         {
-            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
-            this.LogMethodCall(arguments, CreateRecordName);
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
+            this.LogMethodCall(arguments, nameof(this.CreateRecord));
             int result = this.fileCabinetService.CreateRecord(arguments);
-            this.LogMethodResult(CreateRecordName, result.ToString(invatiantCulture));
+            this.LogMethodResult(nameof(this.CreateRecord), result.ToString(InvatiantCulture));
             return result;
         }
 
@@ -63,10 +54,10 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
         public void EditRecord(RecordArguments arguments)
         {
-            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
-            this.LogMethodCall(arguments, EditRecordName);
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
+            this.LogMethodCall(arguments, nameof(this.EditRecord));
             this.fileCabinetService.EditRecord(arguments);
-            this.LogMethodResult(EditRecordName);
+            this.LogMethodResult(nameof(this.EditRecord));
         }
 
         /// <summary>
@@ -77,21 +68,26 @@ namespace FileCabinetApp
         /// <returns>Readonly records collection.</returns>
         public IEnumerable<FileCabinetRecord> GetRecords(string filters, Func<FileCabinetRecord, bool> predicate)
         {
-            this.LogMethodCall(GetRecordsName);
+            this.LogMethodCall(nameof(this.GetRecords));
             var result = this.fileCabinetService.GetRecords(filters, predicate);
-            this.LogMethodResult(GetRecordsName, result.ToString());
+            this.LogMethodResult(nameof(this.GetRecords), result.ToString());
             return result;
         }
 
         /// <summary>
         /// Returns records count. Writes in file method calling parameters.
         /// </summary>
+        /// <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
         /// <returns>Records count.</returns>
-        public (int, int) GetStat()
+        public int GetStat(out int removedRecordsCount)
         {
-            this.LogMethodCall(GetStatName);
-            var result = this.fileCabinetService.GetStat();
-            this.LogMethodResult(GetStatName, result.ToString());
+            this.LogMethodCall(nameof(this.GetStat));
+            var result = this.fileCabinetService.GetStat(out removedRecordsCount);
+            this.LogMethodResult(
+                nameof(this.GetStat),
+                result.ToString(InvatiantCulture),
+                nameof(removedRecordsCount),
+                removedRecordsCount.ToString(InvatiantCulture));
             return result;
         }
 
@@ -104,21 +100,26 @@ namespace FileCabinetApp
         public FileCabinetServiceSnapshot MakeSnapshot(IEnumerable<FileCabinetRecord> records)
         {
             records = records ?? throw new ArgumentNullException($"{nameof(records)}");
-            this.LogMethodCall(records.ToString(), nameof(records), MakeSnapshotName);
+            this.LogMethodCall(records.ToString(), nameof(records), nameof(this.MakeSnapshot));
             var result = this.fileCabinetService.MakeSnapshot(records);
-            this.LogMethodResult(MakeSnapshotName, result.ToString());
+            this.LogMethodResult(nameof(this.MakeSnapshot), result.ToString());
             return result;
         }
 
         /// <summary>
-        /// Pugres the data file. Writes in file method calling parameters.
+        /// Pugres the data file.
         /// </summary>
-        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
-        public (int, int) Purge()
+        /// <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+        /// <returns>Purged records count.</returns>
+        public int Purge(out int totalRecordsBeforePurgeCount)
         {
-            this.LogMethodCall(PurgeName);
-            var result = this.fileCabinetService.Purge();
-            this.LogMethodResult(PurgeName, result.ToString());
+            this.LogMethodCall(nameof(this.Purge));
+            var result = this.fileCabinetService.Purge(out totalRecordsBeforePurgeCount);
+            this.LogMethodResult(
+                nameof(this.Purge),
+                result.ToString(InvatiantCulture),
+                nameof(totalRecordsBeforePurgeCount),
+                totalRecordsBeforePurgeCount.ToString(InvatiantCulture));
             return result;
         }
 
@@ -128,9 +129,9 @@ namespace FileCabinetApp
         /// <param name="recordId">Record Id.</param>
         public void Remove(int recordId)
         {
-            this.LogMethodCall(RemoveName);
+            this.LogMethodCall(recordId.ToString(InvatiantCulture), nameof(recordId), nameof(this.Remove));
             this.fileCabinetService.Remove(recordId);
-            this.LogMethodResult(RemoveName);
+            this.LogMethodResult(nameof(this.Remove));
         }
 
         /// <summary>
@@ -141,10 +142,10 @@ namespace FileCabinetApp
         /// <returns>Restored records count.</returns>
         public int Restore(FileCabinetServiceSnapshot snapshot)
         {
-            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)} is null");
-            this.LogMethodCall(RestoreName, nameof(snapshot), RestoreName);
+            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)}");
+            this.LogMethodCall(snapshot.ToString(), nameof(snapshot), nameof(this.Restore));
             var result = this.fileCabinetService.Restore(snapshot);
-            this.LogMethodResult(RestoreName, result.ToString(invatiantCulture));
+            this.LogMethodResult(nameof(this.Restore), result.ToString(InvatiantCulture));
             return result;
         }
 
@@ -153,42 +154,57 @@ namespace FileCabinetApp
         /// </summary>
         public void Dispose()
         {
-            this.writer.WriteLine($"{DateTime.Now.ToString(dateFormat, invatiantCulture)}=============== End logging ===================");
+            this.writer.WriteLine($"{DateTime.Now.ToString(DateFormat, InvatiantCulture)}=============== End logging ===================");
             this.writer.Close();
         }
 
         private void LogMethodCall(RecordArguments arguments, string methodName)
         {
-            this.writer.WriteLine($"{DateTime.Now.ToString("dd/MMM/yyyy HH:mm:ss", invatiantCulture)} - calling {methodName} method " +
+            this.writer.WriteLine($"{DateTime.Now.ToString("dd/MMM/yyyy HH:mm:ss", InvatiantCulture)} - calling {methodName} method " +
                 $"whith {nameof(arguments.FirstName)} = '{arguments.FirstName}', {nameof(arguments.LastName)} = {arguments.LastName}', " +
-                $"{nameof(arguments.DateOfBirth)} = '{arguments.DateOfBirth.ToString("dd/MMM/yyyy", invatiantCulture)}'" +
+                $"{nameof(arguments.DateOfBirth)} = '{arguments.DateOfBirth.ToString("dd/MMM/yyyy", InvatiantCulture)}'" +
                 $"{nameof(arguments.ZipCode)} = '{arguments.ZipCode}', {nameof(arguments.City)} = '{arguments.City}', " +
-                $"{nameof(arguments.Street)} = '{arguments.Street}', {nameof(arguments.Salary)} = '{arguments.Salary.ToString(invatiantCulture)}," +
+                $"{nameof(arguments.Street)} = '{arguments.Street}', {nameof(arguments.Salary)} = '{arguments.Salary.ToString(InvatiantCulture)}," +
                 $"{nameof(arguments.Gender)} = '{arguments.Gender}'");
         }
 
         private void LogMethodResult(string methodName)
         {
-            this.writer.WriteLine($"{DateTime.Now.ToString(dateTimeFormat, invatiantCulture)} {methodName} completed");
+            this.writer.WriteLine($"{DateTime.Now.ToString(DateTimeFormat, InvatiantCulture)} {methodName} completed");
             this.writer.Flush();
         }
 
         private void LogMethodResult(string methodName, string returnedValue)
         {
-            this.writer.WriteLine($"{DateTime.Now.ToString(dateTimeFormat, invatiantCulture)} {methodName} returned {returnedValue}");
+            this.writer.WriteLine($"{DateTime.Now.ToString(DateTimeFormat, InvatiantCulture)} {methodName} returned {returnedValue}");
+            this.writer.Flush();
+        }
+
+        private void LogMethodResult(string methodName, string returnedValue, string outParameterName, string outParameterValue)
+        {
+            var result = new StringBuilder()
+                .Append($"{DateTime.Now.ToString(DateTimeFormat, InvatiantCulture)} ")
+                .Append($"{methodName} returned {returnedValue}, ")
+                .Append($"out parameter is '{outParameterName}'= {outParameterValue}")
+                .ToString();
+            this.writer.WriteLine(result);
             this.writer.Flush();
         }
 
         private void LogMethodCall(string parameter, string parameterName, string methodName)
         {
-            this.writer.WriteLine($"{DateTime.Now.ToString(dateTimeFormat, invatiantCulture)} - calling {methodName} method " +
-                $"whith {parameterName} = '{parameter}'");
+            var result = new StringBuilder()
+                .Append($"{DateTime.Now.ToString(DateTimeFormat, InvatiantCulture)} - ")
+                .Append($"calling {methodName} method ")
+                .Append($"whith {parameterName} = '{parameter}'")
+                .ToString();
+            this.writer.WriteLine(result);
             this.writer.Flush();
         }
 
         private void LogMethodCall(string methodName)
         {
-            this.writer.WriteLine($"{DateTime.Now.ToString(dateTimeFormat, invatiantCulture)} - calling {methodName} void method");
+            this.writer.WriteLine($"{DateTime.Now.ToString(DateTimeFormat, InvatiantCulture)} - calling {methodName} void method");
             this.writer.Flush();
         }
     }

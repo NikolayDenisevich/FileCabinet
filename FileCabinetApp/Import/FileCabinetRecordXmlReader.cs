@@ -13,16 +13,14 @@ namespace FileCabinetApp
     /// </summary>
     public class FileCabinetRecordXmlReader
     {
-        private StreamReader reader;
+        private readonly StreamReader reader;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetRecordXmlReader"/> class.
         /// </summary>
         /// <param name="reader">StreamReader instance.</param>
-        public FileCabinetRecordXmlReader(StreamReader reader)
-        {
-            this.reader = reader;
-        }
+        /// <exception cref="ArgumentNullException">Thrown when reader is null.</exception>
+        public FileCabinetRecordXmlReader(StreamReader reader) => this.reader = reader ?? throw new ArgumentNullException($"{nameof(reader)}");
 
         /// <summary>
         /// Reads all records from xml file.

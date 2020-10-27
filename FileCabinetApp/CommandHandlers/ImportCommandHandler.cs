@@ -14,18 +14,14 @@ namespace FileCabinetApp.CommandHandlers
         private const string ImportCommand = "import";
         private const string CsvPropetyName = "csv";
         private const string XmlPropetyName = "xml";
-        private static Tuple<string, Action<string, string>>[] properties = new Tuple<string, Action<string, string>>[]
-        {
-            new Tuple<string, Action<string, string>>(CsvPropetyName, ImportFromFile),
-            new Tuple<string, Action<string, string>>(XmlPropetyName, ImportFromFile),
-        };
-
+        private static readonly string[] PropertiesNames = new string[] { CsvPropetyName, XmlPropetyName };
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> service;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ImportCommandHandler"/> class.
         /// </summary>
         /// <param name="fileCabinetService">FileCabietService instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public ImportCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
             service = fileCabinetService;
@@ -35,11 +31,17 @@ namespace FileCabinetApp.CommandHandlers
         /// Handles the 'import' command request.
         /// </summary>
         /// <param name="commandRequest">Request for handling.</param>
+        /// <exception cref="ArgumentNullException">Thrown when commandRequest is null.</exception>
         public override void Handle(AppCommandRequest commandRequest)
         {
+            commandRequest = commandRequest ?? throw new ArgumentNullException(nameof(commandRequest));
             if (commandRequest.Command.Equals(ImportCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                Parser.ParceParameters(properties, commandRequest.Parameters, ' ');
+                string property = commandRequest.Parameters;
+                if (Parser.TryParseImportExportParameters(PropertiesNames, ref property, out string propertyParameters))
+                {
+                    ImportFromFile(property, propertyParameters);
+                }
             }
             else
             {
@@ -47,9 +49,9 @@ namespace FileCabinetApp.CommandHandlers
             }
         }
 
-        private static void ImportFromFile(string propertyName, string value)
+        private static void ImportFromFile(string propertyName, string propertyParameters)
         {
-            if (!IsPathValid(value, out string filePath))
+            if (!IsPathValid(propertyParameters, out string filePath))
             {
                 return;
             }
@@ -58,32 +60,20 @@ namespace FileCabinetApp.CommandHandlers
             FileCabinetServiceSnapshot snapshot = service.MakeSnapshot(records);
             using FileStream fileStream = File.OpenRead(filePath);
             using StreamReader streamReader = new StreamReader(fileStream, Encoding.Unicode);
-            SelectSoruce(propertyName, snapshot, streamReader);
+            LoadFromFile(propertyName, snapshot, streamReader);
             int restoredRecordsCount = service.Restore(snapshot);
-            streamReader.Close();
-            fileStream.Close();
             Console.WriteLine($"{restoredRecordsCount} records were imported from {filePath}.");
         }
 
-        private static void SelectSoruce(string propertyName, FileCabinetServiceSnapshot snapshot, StreamReader reader)
+        private static void LoadFromFile(string propertyName, FileCabinetServiceSnapshot snapshot, StreamReader reader)
         {
-#pragma warning disable CA1308 // Normalize strings to uppercase
-            string propertyInLower = propertyName.ToLowerInvariant();
-#pragma warning restore CA1308 // Normalize strings to uppercase
-            switch (propertyInLower)
+            Tuple<string, Action<StreamReader>>[] loaders = new Tuple<string, Action<StreamReader>>[]
             {
-                case CsvPropetyName:
-                    {
-                        snapshot.LoadFromCsv(reader);
-                        break;
-                    }
-
-                case XmlPropetyName:
-                    {
-                        snapshot.LoadFromXml(reader);
-                        break;
-                    }
-            }
+                    new Tuple<string, Action<StreamReader>>(CsvPropetyName, snapshot.LoadFromCsv),
+                    new Tuple<string,  Action<StreamReader>>(XmlPropetyName, snapshot.LoadFromXml),
+            };
+            int index = Array.FindIndex(loaders, s => s.Item1.Equals(propertyName, StringComparison.InvariantCultureIgnoreCase));
+            loaders[index].Item2(reader);
         }
 
         private static bool IsPathValid(string value, out string filePath)

@@ -5,7 +5,7 @@ namespace FileCabinetApp
     /// <summary>
     /// Provides default ZipCode argument and input validator.
     /// </summary>
-    internal class ZipCodeValidator : IRecordValidator<RecordArguments>
+    public class ZipCodeValidator : IRecordValidator<RecordArguments>
     {
         /// <summary>
         /// Gets or sets min ZipCode value.
@@ -27,8 +27,11 @@ namespace FileCabinetApp
         /// Validates ZipCode argument.
         /// </summary>
         /// <param name="arguments">A set of arguments to validate.</param>
+        /// <exception cref="ArgumentNullException">Thrown when arguments is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">arguments.ZipCode is not in the range from Min to Max.</exception>
         public void ValidateArguments(RecordArguments arguments)
         {
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             if (arguments.ZipCode < this.Min || arguments.ZipCode > this.Max)
             {
                 throw new ArgumentOutOfRangeException($"{nameof(arguments.ZipCode)} range is {this.Min}..{this.Max}");
