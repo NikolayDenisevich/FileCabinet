@@ -4,5 +4,1906 @@
         <name>FileCabinetApp</name>
     </assembly>
     <members>
+        <member name="T:FileCabinetApp.CommandHandlers.AppCommandRequest">
+            <summary>
+            Provides command request.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.AppCommandRequest.#ctor(System.String,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.AppCommandRequest"/> class.
+            </summary>
+            <param name="command">Command name.</param>
+            <param name="parameters">Commad parameters.</param>
+        </member>
+        <member name="P:FileCabinetApp.CommandHandlers.AppCommandRequest.Command">
+            <summary>
+            Gets command value.
+            </summary>
+            <value>
+            Command value.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.CommandHandlers.AppCommandRequest.Parameters">
+            <summary>
+            Gets command parameters value.
+            </summary>
+            <value>
+            Command parameters value.
+            </value>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.CommandHandlerBase">
+            <summary>
+            Provides CommandHandler base class.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.CommandHandlerBase.SetNext(FileCabinetApp.CommandHandlers.ICommandHandler)">
+            <summary>
+            Sets next command handler in the chain.
+            </summary>
+            <param name="commandHandler">Next command handler in the chain.</param>
+            <returns>CommandHandlerBase instance command handler.</returns>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.CommandHandlerBase.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.CreateCommandHandler">
+            <summary>
+            Provides 'create' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.CreateCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments},FileCabinetApp.InputValidator)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.CreateCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <param name="inputValidator">InputValidator instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when inputValidator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.CreateCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'create' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.DeleteCommandHandler">
+            <summary>
+            Provides the 'delete' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.DeleteCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.DeleteCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.DeleteCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'delete' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.ExitCommandHandler">
+            <summary>
+            Provides the 'exit' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ExitCommandHandler.#ctor(System.Action{System.Boolean})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.ExitCommandHandler"/> class.
+            </summary>
+            <param name="actionRunning">Sets filecabinetservice 'isRunning' flag equals to false.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when actionRunning is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ExitCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'exit' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.ExportCommandHandler">
+            <summary>
+            Provides the 'export' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ExportCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.ExportCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ExportCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'export' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.HelpCommandHandler">
+            <summary>
+            Provides 'help' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.HelpCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'help' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.ImportCommandHandler">
+            <summary>
+            Provides the 'import' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ImportCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.ImportCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ImportCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'import' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.InsertCommandHandler">
+            <summary>
+            Provides 'insert' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.InsertCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments},FileCabinetApp.InputValidator)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.InsertCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <param name="validator">InputValidator instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.InsertCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'insert' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.PurgeCommandHandler">
+            <summary>
+            Provides the 'purge' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.PurgeCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.PurgeCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.PurgeCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'purge' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.SelectCommandHandler">
+            <summary>
+            Provides the 'update' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.SelectCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.SelectCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.SelectCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'update' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.ServiceCommandHandlerBase">
+            <summary>
+            Provides CommandHandler base class.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ServiceCommandHandlerBase.InitializeDictionaryByPropertiesNames(System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Adds to the dictionary keys as names of FileCabinetRecord properties and null values.
+            </summary>
+            <param name="dictionary">Target dictionary.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when dictionary is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ServiceCommandHandlerBase.TryGetFilteredCollection(System.String,FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments},System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord}@)">
+            <summary>
+            Gets filtered collection using specified filters. A return value indicates whether the collection creation result is succeeded.
+            </summary>
+            <param name="filters">Filters string representation.</param>
+            <param name="service">FileCabinetService instance.</param>
+            <param name="collection">When this method returns, contains records collection filtered by specified filters, if the creation sucseeded, or null, if the creation failed or there is no records found using specified filters.</param>
+            <returns>true if collection was created successfully; otherwise, false.</returns>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.StatCommandHandler">
+            <summary>
+            Provides 'stat' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.StatCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.StatCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.StatCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'stat' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.UpdateCommandHandler">
+            <summary>
+            Provides the 'update' command handler for FileCabinetApp.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.UpdateCommandHandler.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments},FileCabinetApp.InputValidator)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CommandHandlers.UpdateCommandHandler"/> class.
+            </summary>
+            <param name="fileCabinetService">FileCabietService instance.</param>
+            <param name="validator">InputValidator instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.UpdateCommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the 'update' command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commandRequest is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CommandHandlers.ICommandHandler">
+            <summary>
+            Defines methods for handle commands.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ICommandHandler.SetNext(FileCabinetApp.CommandHandlers.ICommandHandler)">
+            <summary>
+            Sets next command handler in the chain.
+            </summary>
+            <param name="commandHandler">Next command handler in the chain.</param>
+            <returns>CommandHandlerBase instance command handler.</returns>
+        </member>
+        <member name="M:FileCabinetApp.CommandHandlers.ICommandHandler.Handle(FileCabinetApp.CommandHandlers.AppCommandRequest)">
+            <summary>
+            Handles the command request.
+            </summary>
+            <param name="commandRequest">Request for handling.</param>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetRecordCsvWriter">
+            <summary>
+            Representes the FileCabinetRecordCsvWriter writer object.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordCsvWriter.#ctor(System.IO.TextWriter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetRecordCsvWriter"/> class.
+            </summary>
+            <param name="textWriter">Textwriter instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when textWriter is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordCsvWriter.Write(FileCabinetApp.FileCabinetRecord)">
+            <summary>
+            Writes the record to file.
+            </summary>
+            <param name="record">The filecabinet record.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when record is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetRecordXmlWriter">
+            <summary>
+            Representes the FileCabinetRecordXmlWriter object.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlWriter.#ctor(System.IO.StreamWriter)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetRecordXmlWriter"/> class.
+            </summary>
+            <param name="streamWriter">streamWriter instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when streamWriter is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlWriter.Finalize">
+            <summary>
+            Finalizes an instance of the <see cref="T:FileCabinetApp.FileCabinetRecordXmlWriter"/> class.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlWriter.Write(FileCabinetApp.FileCabinetRecord)">
+            <summary>
+            Writes the record to file.
+            </summary>
+            <param name="record">The filecabinet record.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when record is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlWriter.Dispose">
+            <inheritdoc/>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlWriter.Dispose(System.Boolean)">
+            <summary>
+             Frees resources.
+            </summary>
+            <param name="disposing">Indicates whether the method call comes from a Dispose method (its value is true) or from a finalizer (its value is false).</param>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetServiceSnapshot">
+            <summary>
+            Provides FileCabinetServiceSnapshot.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetServiceSnapshot.#ctor(System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetServiceSnapshot"/> class.
+            </summary>
+            <param name="records">The FileCabinetRecords collection.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when records is null.</exception>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetServiceSnapshot.Records">
+            <summary>
+            Gets records readonly collection.
+            </summary>
+            <value>
+            Records readonly collection.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetServiceSnapshot.SaveToCsv(System.IO.StreamWriter)">
+            <summary>
+            Saves records to csv.
+            </summary>
+            <param name="streamWriter">The streamWriter instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when streamWriter is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetServiceSnapshot.SaveToXml(System.IO.StreamWriter)">
+            <summary>
+            Saves records to xml.
+            </summary>
+            <param name="streamWriter">The streamWriter instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when writer is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetServiceSnapshot.LoadFromCsv(System.IO.StreamReader)">
+            <summary>
+            Loads records from csv file.
+            </summary>
+            <param name="streamReader">The StreamReader instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when streamReader is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetServiceSnapshot.LoadFromXml(System.IO.StreamReader)">
+            <summary>
+            Loads records from xml file.
+            </summary>
+            <param name="streamReader">The StreamReader instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when streamReader is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetFilesystemService">
+            <summary>
+            Provides a file cabinet record file system service.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.#ctor(FileCabinetApp.IRecordValidator{FileCabinetApp.RecordArguments},System.IO.FileStream)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetFilesystemService"/> class.
+            </summary>
+            <param name="validator">The arguments record validator.</param>
+            <param name="fileStream">File stream for working with data file.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null. -or- fileStream is null. </exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.MakeSnapshot(System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord})">
+            <summary>
+            Creates the FileCabinetServiceSnapshot instance.
+            </summary>
+            <param name="records">The records collection for export.</param>
+            <returns>The FileCabinetServiceSnapshot instance.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when records is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.Purge(System.Int32@)">
+            <summary>
+            Pugres the data file.
+            </summary>
+            <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+            <returns>Purged records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.Restore(FileCabinetApp.FileCabinetServiceSnapshot)">
+            <summary>
+            Restrores all the containers after import from file.
+            </summary>
+            <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when snapshot is null.</exception>
+            <returns>Restored records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.CreateRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Сreates a record in the file.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <returns>Record ID.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.EditRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Edits a record in the file.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+            <exception cref="T:System.ArgumentException">There is no record #{arguments.Id} in the list.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.Remove(System.Int32)">
+            <summary>
+            Removes specified record.
+            </summary>
+            <param name="recordId">Record Id.</param>
+            <exception cref="T:System.ArgumentException">There is no record #recordId in the list.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.GetRecords(System.String,System.Func{FileCabinetApp.FileCabinetRecord,System.Boolean})">
+            <summary>
+            Returns records collection.
+            </summary>
+            <param name="filters">Filters string representation.</param>
+            <param name="predicate">Filtering condition.</param>
+            <returns>Readonly records collection.</returns>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetFilesystemService.GetStat(System.Int32@)">
+            <summary>
+            Returns records count.
+            </summary>
+            <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
+            <returns>Records count.</returns>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetMemoryService">
+            <summary>
+            Provides a file cabinet record memory service.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.#ctor(FileCabinetApp.IRecordValidator{FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetMemoryService"/> class.
+            </summary>
+            <param name="validator">The arguments record validator.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.Remove(System.Int32)">
+            <summary>
+            Removes specified record.
+            </summary>
+            <param name="recordId">Record Id.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if there is no record #recordId in the list.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.MakeSnapshot(System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord})">
+            <summary>
+            Creates the FileCabinetServiceSnapshot instance.
+            </summary>
+            <param name="records">The records collection for export.</param>
+            <returns>The FileCabinetServiceSnapshot instance.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when records is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.Restore(FileCabinetApp.FileCabinetServiceSnapshot)">
+            <summary>
+            Restrores all the containers after import from file.
+            </summary>
+            <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+            <returns>Restored records count.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when snapshot is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.CreateRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Сreates a record in the list.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <returns>Record ID.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.EditRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Edits a record in the list.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.GetRecords(System.String,System.Func{FileCabinetApp.FileCabinetRecord,System.Boolean})">
+            <summary>
+            Returns records collection.
+            </summary>
+            <param name="filters">Filters string representation.</param>
+            <param name="predicate">Filtering condition.</param>
+            <returns>Readonly records collection.</returns>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.GetStat(System.Int32@)">
+            <summary>
+            Returns records count.
+            </summary>
+            <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
+            <returns>Records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetMemoryService.Purge(System.Int32@)">
+            <summary>
+            Pugres the data file.
+            </summary>
+            <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+            <returns>Purged records count.</returns>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetRecord">
+            <summary>
+            Provides an object representation of FileCabinetRecord.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.Id">
+            <summary>
+            Gets or sets the ID value of this instance.
+            </summary>
+            <value>
+            The ID value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.FirstName">
+            <summary>
+            Gets or sets the Fist Name value of this instance.
+            </summary>
+            <value>
+            The Fist Name value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.LastName">
+            <summary>
+            Gets or sets the Last Name value of this instance.
+            </summary>
+            <value>
+            The Last Name value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.DateOfBirth">
+            <summary>
+            Gets or sets the Date of Birth value of this instance.
+            </summary>
+            <value>
+            The Date of Birth value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.ZipCode">
+            <summary>
+            Gets or sets the Zip Code value of this instance.
+            </summary>
+            <value>
+            The Zip Code value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.City">
+            <summary>
+            Gets or sets the City value of this instance.
+            </summary>
+            <value>
+            The City value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.Street">
+            <summary>
+            Gets or sets the Street value of this instance.
+            </summary>
+            <value>
+            The Street value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.Salary">
+            <summary>
+            Gets or sets the Salary value of this instance.
+            </summary>
+            <value>
+            The Salary value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FileCabinetRecord.Gender">
+            <summary>
+            Gets or sets the Gender value of this instance.
+            </summary>
+            <value>
+            The Gender value of this instance.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecord.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:FileCabinetApp.Input">
+            <summary>
+            Representes Input class.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Input.ReadArguments(FileCabinetApp.InputValidator)">
+            <summary>
+            Reads user input to create the FileCabinetRecord.
+            </summary>
+            <param name="validator">Input validator instance.</param>
+            <returns>Valid arguments for record creating.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Input.TryCheckInput``1(System.String,System.Func{System.String,System.Tuple{System.Boolean,System.String,``0}},System.Func{``0,System.Tuple{System.Boolean,System.String}},``0@)">
+            <summary>
+            Checks input parameter for valid data type and valid data values.
+            </summary>
+            <typeparam name="T">Type of value.</typeparam>
+            <param name="input">A string containing a value to convert.</param>
+            <param name="converter">Converter from string to T type.</param>
+            <param name="validator">Input data validator.</param>
+            <param name="value">When this method returns, contains the value equivalent to the type of T contained in input, if the conversion succeeded, or default value if the conversion failed. The conversion fails if the input parameter is null, is an empty string (""), or does not contain a valid string representation of a T value. This parameter is passed uninitialized.</param>
+            <returns>true if the input parameter was converted successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when converter is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Input.TryToUpdateArgumentsWithId(FileCabinetApp.RecordArguments,System.Collections.Generic.Dictionary{System.String,System.String},FileCabinetApp.InputValidator)">
+            <summary>
+            Fills the RecordArguments instance with valid data.
+            </summary>
+            <param name="arguments">The RecordArguments instance.</param>
+            <param name="propertiesNameValuePairs">The dictionary that contains string representation arguments values.</param>
+            <param name="validator">The input validator instance.</param>
+            <returns>true if all the properties of RecordArguments was converted from dictionary and assigned successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when propertiesNameValuePairs is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Input.TryToUpdateArgumentsWhithoutId(FileCabinetApp.RecordArguments,System.Collections.Generic.Dictionary{System.String,System.String},FileCabinetApp.InputValidator)">
+            <summary>
+            Fills the RecordArguments instance with valid data exept Id property.
+            </summary>
+            <param name="arguments">The RecordArguments instance.</param>
+            <param name="propertiesNameValuePairs">The dictionary that contains string representation arguments values.</param>
+            <param name="validator">The input validator instance.</param>
+            <returns>true if properties of RecordArguments was converted from dictionary and assigned successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when propertiesNameValuePairs is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when validator is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Input.IntConverter(System.String)">
+            <summary>
+            Converts string input to Int32.
+            </summary>
+            <param name="input">string input.</param>
+            <returns>Item1 is indicates whether the conversion succeeded. Item2 is conversion failed expalnation. Item3 is Int32 convertion result.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Input.StringsConverter(System.String)">
+            <summary>
+            Converts string input to string.
+            </summary>
+            <param name="input">string input.</param>
+            <returns>Item1 is indicates whether the conversion succeeded. Item2 is conversion failed expalnation. Item3 is string convertion result.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Input.DatesConverter(System.String)">
+            <summary>
+            Converts string input to DateTime.
+            </summary>
+            <param name="input">string input.</param>
+            <returns>Item1 is indicates whether the conversion succeeded. Item2 is conversion failed expalnation. Item3 is DateTime convertion result.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Input.ShortConverter(System.String)">
+            <summary>
+            Converts string input to Int16.
+            </summary>
+            <param name="input">string input.</param>
+            <returns>Item1 is indicates whether the conversion succeeded. Item2 is conversion failed expalnation. Item3 is Int16 convertion result.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Input.DecimalConverter(System.String)">
+            <summary>
+            Converts string input to Decimal.
+            </summary>
+            <param name="input">string input.</param>
+            <returns>Item1 is indicates whether the conversion succeeded. Item2 is conversion failed expalnation. Item3 is Decimal convertion result.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Input.CharConverter(System.String)">
+            <summary>
+            Converts string input to Char.
+            </summary>
+            <param name="input">string input.</param>
+            <returns>Item1 is indicates whether the conversion succeeded. Item2 is conversion failed expalnation. Item3 is Char convertion result.</returns>
+        </member>
+        <member name="T:FileCabinetApp.InputValidator">
+            <summary>
+            Provides the input validator.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.#ctor(FileCabinetApp.ValidationRulesContainer)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.InputValidator"/> class.
+            </summary>
+            <param name="container">ValidationRulesContainer instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when container is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateFirstName(System.String)">
+            <summary>
+            Validates FirstName input.
+            </summary>
+            <param name="input">Input string.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateLastName(System.String)">
+            <summary>
+            Validates LastName input.
+            </summary>
+            <param name="input">Input string.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateCity(System.String)">
+            <summary>
+            Validates City input.
+            </summary>
+            <param name="input">Input string.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateStreet(System.String)">
+            <summary>
+            Validates Street input.
+            </summary>
+            <param name="input">Input string.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateChar(System.Char)">
+            <summary>
+            Validates char input.
+            </summary>
+            <param name="input">Input character.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateDate(System.DateTime)">
+            <summary>
+            Validates DateTime input.
+            </summary>
+            <param name="input">Input DateTime.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateDecimal(System.Decimal)">
+            <summary>
+            Validates decimal input.
+            </summary>
+            <param name="input">Input decimal number.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateShort(System.Int16)">
+            <summary>
+            Validates short input.
+            </summary>
+            <param name="input">Input short number.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="M:FileCabinetApp.InputValidator.ValidateInt(System.Int32)">
+            <summary>
+            Validates int input.
+            </summary>
+            <param name="input">Input int number.</param>
+            <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        </member>
+        <member name="T:FileCabinetApp.Parser">
+            <summary>
+            Representes Parser class.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.Parser.InputValidator">
+            <summary>
+            Gets or sets Input validator instance.
+            </summary>
+            <value>
+            Input validator instance.
+            </value>
+            <exception cref="T:System.FieldAccessException">Thrown when inputValidator field is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when value is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Parser.TryParseSelectors(System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Parses selectors to the selectors dictionary for the select command.
+            </summary>
+            <param name="selectors">The string representation of the selectors.</param>
+            <param name="selectorsDictionary">Parsing destinathon.</param>
+            <returns>true if the selectors dictionary is filled successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when selectorsDictionary is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Parser.TryParseUpdateSetters(System.String,System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Parses setters to the setters dictionary for the update command.
+            </summary>
+            <param name="setters">The string representation of the setters.</param>
+            <param name="settersDictionary">Parsing destination.</param>
+            <returns>true if the setters dictionary is filled successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when settersDictionary is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Parser.SetValueToAllDictionaryEntries``1(System.Collections.Generic.Dictionary{System.String,System.String},System.String)">
+            <summary>
+            Sets all propertiesNamesValuePairs dictionary values ​​to the specified value.
+            </summary>
+            <param name="propertiesNamesValuePairs">Name-Value pairs to set to the specified value.</param>
+            <param name="value">Value to set to all dictionary entries.</param>
+            <typeparam name="TRecord">Record type.</typeparam>
+            <exception cref="T:System.ArgumentNullException">Thrown when propertiesNamesValuePairs is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Parser.TryParseImportExportParameters(System.String[],System.String@,System.String@)">
+            <summary>
+            Parses command parameters.
+            </summary>
+            <param name="properties">A set of defined propeties.</param>
+            <param name="parameters">Parameters for parsing.</param>
+            <param name="propertyValue">When this method returns, contains parsed propertie value.</param>
+            <returns>true if parameters parsed successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when properties is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when parameters is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Parser.TryParseFilters(System.String,System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Object}},System.Boolean@)">
+            <summary>
+            Parses filters to the filters dictionary.
+            </summary>
+            <param name="filters">The string representation of the setters.</param>
+            <param name="filtersDictionary">Parsing destination.</param>
+            <param name="isAndAlsoCombineMethod">When this method returns, contains true if flters predicates combining method is AndAlso, false if felters predicates combining method is OrElse.</param>
+            <returns>true if the filters dictionary is filled successfully; otherwise, false.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when filters is null.</exception>
+            <exception cref="T:System.ArgumentNullException">Thrown when filtersDictionary is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.PredicatesFactory">
+            <summary>
+            Representes predicates factory class.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.PredicatesFactory.GetPredicate(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Object}},System.Boolean)">
+            <summary>
+            Creates predicate using specified filters.
+            </summary>
+            <param name="filtersDictionary">The dictionary that contains key as names of FileCabinetRecord properties and set of values.</param>
+            <param name="isAndAlso">true if predicates combining method is AndAlso, false if predicates combining method is OrElse.</param>
+            <returns>A condition.</returns>
+        </member>
+        <member name="T:FileCabinetApp.Print">
+            <summary>
+            Representes Print class.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.ParametrizedCommandHint">
+            <summary>
+            Prints hint about parametrized commnds using.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.MissedPropertyInfo(System.String)">
+            <summary>
+            Prints message about missed property.
+            </summary>
+            <param name="propertyName">The name of missed property.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.IncorrectSyntax(System.String)">
+            <summary>
+            Prints incorrect syntax message.
+            </summary>
+            <param name="input">Incorrect data string.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.IncorrectSyntax(System.String,System.String)">
+            <summary>
+            Prints incorrect syntax message.
+            </summary>
+            <param name="input">Incorrect data.</param>
+            <param name="parameter">Incorrect parameter.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.MismatchOfParametersAndValues(System.String,System.String)">
+            <summary>
+            Prints mismatch of parameters and (or) values message.
+            </summary>
+            <param name="parameters">Incorrect parameters.</param>
+            <param name="values">Incorrect values.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.OperationResult(System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord},System.String)">
+            <summary>
+            Prints message about operation result.
+            </summary>
+            <param name="operatedRecords">The set of records with which the operation was performed.</param>
+            <param name="operationName">The name of operation.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when operatedRecords is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.Print.ValidationRulesUsageHint">
+            <summary>
+            Prints  validation rules usage hint.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.StorageUsageHint">
+            <summary>
+            Prints storage usage hint.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.StopWathActivated">
+            <summary>
+            Prints message indicates that stopwatch is activatd.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.LoggingActivated">
+            <summary>
+            Prints message indicates that logging is activatd.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.UsingServiceValidationRules(System.String)">
+            <summary>
+            Prints message whith type of service validation rules.
+            </summary>
+            <param name="serviceValidationType">The validation rules type.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.UsingStorageType(System.String)">
+            <summary>
+            Prints message whith type of storage.
+            </summary>
+            <param name="storageType">The data storage type.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.MissedCommandInfo(System.String)">
+            <summary>
+            Prints message about missed command.
+            </summary>
+            <param name="command">Missed command.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.UseCommandWithoutParameters(System.String)">
+            <summary>
+            Prints hint about parametless command using.
+            </summary>
+            <param name="commandName">Command name.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.RepeatedProperty(System.String)">
+            <summary>
+            Prints message about repeated property.
+            </summary>
+            <param name="propertyName">The property name.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.NoRecordsWithFilters(System.String)">
+            <summary>
+            Prints message about the absence of records with the specified filters.
+            </summary>
+            <param name="filters">The specified filters string representation.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.NoRecords">
+            <summary>
+            Prints message about the absence of records.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Print.CannotSetValueToProperty(System.String)">
+            <summary>
+            Prints a message about the impossibility to assign a value to the specified property.
+            </summary>
+            <param name="propertyName">The property name.</param>
+        </member>
+        <member name="M:FileCabinetApp.Print.MostSimilarCommands(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Prints a message about the most similar commands.
+            </summary>
+            <param name="commands">The most similar commands collection.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when commands is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.RecordArguments">
+            <summary>
+            Provides an object that contains record arguments.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.Id">
+            <summary>
+            Gets or sets the ID value of this instance.
+            </summary>
+            <value>
+            The ID value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.FirstName">
+            <summary>
+            Gets or sets the Fist Name value of this instance.
+            </summary>
+            <value>
+            The Fist Name value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.LastName">
+            <summary>
+            Gets or sets the Last Name value of this instance.
+            </summary>
+            <value>
+            The Last Name value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.DateOfBirth">
+            <summary>
+            Gets or sets the Date of Birth value of this instance.
+            </summary>
+            <value>
+            The Date of Birth value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.ZipCode">
+            <summary>
+            Gets or sets the Zip Code value of this instance.
+            </summary>
+            <value>
+            The Zip Code value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.City">
+            <summary>
+            Gets or sets the City value of this instance.
+            </summary>
+            <value>
+            The City value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.Street">
+            <summary>
+            Gets or sets the Street value of this instance.
+            </summary>
+            <value>
+            The Street value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.Salary">
+            <summary>
+            Gets or sets the Salary value of this instance.
+            </summary>
+            <value>
+            The Salary value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.RecordArguments.Gender">
+            <summary>
+            Gets or sets the Gender value of this instance.
+            </summary>
+            <value>
+            The Gender value of this instance.
+            </value>
+        </member>
+        <member name="T:FileCabinetApp.TableCreator">
+            <summary>
+            Provides table creator from collection of type T.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.TableCreator.CreateTable``1(System.Collections.Generic.IEnumerable{``0},System.Collections.Generic.Dictionary{System.String,System.String},System.IO.TextWriter)">
+            <summary>
+            Creates table from collection of type T.
+            </summary>
+            <param name="collection">Elements collection of type T.</param>
+            <param name="selectors">A set of posible columns names.</param>
+            <param name="writer">Output stream for writing a table.</param>
+            <typeparam name="T">Collection elements type.</typeparam>
+            <exception cref="T:System.ArgumentNullException">Thrown when collection is null. -or- selectors is null. -or- writer is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.ValidationRulesContainer">
+            <summary>
+            Provides container for FileCabinetRecord validators.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.FirstName">
+            <summary>
+            Gets or sets FirstNameValidator instance.
+            </summary>
+            <value>
+            FirstNameValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.LastName">
+            <summary>
+            Gets or sets LastNameValidator instance.
+            </summary>
+            <value>
+            LastNameValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.DateOfBirth">
+            <summary>
+            Gets or sets DateOfBirthValidator instance.
+            </summary>
+            <value>
+            DateOfBirthValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.ZipCode">
+            <summary>
+            Gets or sets ZipCodeValidator instance.
+            </summary>
+            <value>
+            ZipCodeValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.City">
+            <summary>
+            Gets or sets CityValidator instance.
+            </summary>
+            <value>
+            CityValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.Street">
+            <summary>
+            Gets or sets StreetValidator instance.
+            </summary>
+            <value>
+            StreetValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.Salary">
+            <summary>
+            Gets or sets SalaryValidator instance.
+            </summary>
+            <value>
+            SalaryValidator instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ValidationRulesContainer.Gender">
+            <summary>
+            Gets or sets GenderValidator instance.
+            </summary>
+            <value>
+            GenderValidator instance.
+            </value>
+        </member>
+        <member name="T:FileCabinetApp.XmlHelper">
+            <summary>
+            Provides root node for FileCabinetRecords serialization.
+            </summary>
+        </member>
+        <member name="F:FileCabinetApp.XmlHelper.Records">
+            <summary>
+            Records set for serialization.
+            </summary>
+        </member>
+        <member name="T:FileCabinetApp.Record">
+            <summary>
+            Provides FileCabinetRecord for xml searization.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.Record.Id">
+            <summary>
+            Gets or sets the ID value of this instance.
+            </summary>
+            <value>
+            The ID value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.Name">
+            <summary>
+            Gets or sets full name value of this instance.
+            </summary>
+            <value>
+            Full name value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.DateOfBirth">
+            <summary>
+            Gets or sets the Date of Birth value of this instance.
+            </summary>
+            <value>
+            The Date of Birth value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.DateOfBirthString">
+            <summary>
+            Gets or sets the string representation of Date of Birth value of this instance.
+            </summary>
+            <value>
+            The the string representation of Date of Birth value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.Address">
+            <summary>
+            Gets or sets full address value of this instance.
+            </summary>
+            <value>
+            The full address value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.Salary">
+            <summary>
+            Gets or sets the Salary value of this instance.
+            </summary>
+            <value>
+            The Salary value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.Gender">
+            <summary>
+            Gets or sets the Gender value of this instance.
+            </summary>
+            <value>
+            The Gender value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Record.GenderString">
+            <summary>
+            Gets or sets the Gender string representation value of this instance.
+            </summary>
+            <value>
+            The Gender string representation value of this instance.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.Record.ToString">
+            <inheritdoc/>
+        </member>
+        <member name="T:FileCabinetApp.FullName">
+            <summary>
+            Provides element FullName for FileCabinetRecordXml.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.FullName.FirstName">
+            <summary>
+            Gets or sets the Fist Name value of this instance.
+            </summary>
+            <value>
+            The Fist Name value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FullName.LastName">
+            <summary>
+            Gets or sets the Last Name value of this instance.
+            </summary>
+            <value>
+            The Last Name value of this instance.
+            </value>
+        </member>
+        <member name="T:FileCabinetApp.Address">
+            <summary>
+            Provides element Address for FileCabinetRecordXml.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.Address.ZipCode">
+            <summary>
+            Gets or sets the Zip Code value of this instance.
+            </summary>
+            <value>
+            The Zip Code value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Address.City">
+            <summary>
+            Gets or sets the City value of this instance.
+            </summary>
+            <value>
+            The City value of this instance.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.Address.Street">
+            <summary>
+            Gets or sets the Street value of this instance.
+            </summary>
+            <value>
+            The Street value of this instance.
+            </value>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetRecordCsvReader">
+            <summary>
+            Provides FileCabinetRecordCsvReader.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordCsvReader.#ctor(System.IO.StreamReader)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetRecordCsvReader"/> class.
+            </summary>
+            <param name="reader">StreamReader instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when reader is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordCsvReader.ReadAll">
+            <summary>
+            Reads all records from csv file.
+            </summary>
+            <returns>Records list.</returns>
+        </member>
+        <member name="T:FileCabinetApp.FileCabinetRecordXmlReader">
+            <summary>
+            Provides FileCabinetRecordXmlReader.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlReader.#ctor(System.IO.StreamReader)">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.FileCabinetRecordXmlReader"/> class.
+            </summary>
+            <param name="reader">StreamReader instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when reader is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.FileCabinetRecordXmlReader.ReadAll">
+            <summary>
+            Reads all records from xml file.
+            </summary>
+            <returns>Records list.</returns>
+        </member>
+        <member name="T:FileCabinetApp.IFileCabinetService`2">
+            <summary>
+            Defines metohods for FileCabinetServices.
+            </summary>
+            <typeparam name="TRecord">Record type.</typeparam>
+            <typeparam name="TAruments">Arguments type.</typeparam>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.CreateRecord(`1)">
+            <summary>
+            Creates a new record.
+            </summary>
+            <param name="arguments">Record arguments.</param>
+            <returns>Id-number for new record.</returns>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.EditRecord(`1)">
+            <summary>
+            Edits specific record.
+            </summary>
+            <param name="arguments">Record arguments.</param>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.GetRecords(System.String,System.Func{`0,System.Boolean})">
+            <summary>
+            Returns records collection.
+            </summary>
+            <param name="filters">Filters string representation.</param>
+            <param name="predicate">Filtering condition.</param>
+            <returns>Readonly records collection.</returns>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.GetStat(System.Int32@)">
+            <summary>
+            Returns records count.
+            </summary>
+            <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
+            <returns>Records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.MakeSnapshot(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Creates the FileCabinetServiceSnapshot instance.
+            </summary>
+            <param name="records">The records collection for export.</param>
+            <returns>The FileCabinetServiceSnapshot instance.</returns>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.Restore(FileCabinetApp.FileCabinetServiceSnapshot)">
+            <summary>
+            Restrores all the containers after import from file.
+            </summary>
+            <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+            <returns>Restored records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.Remove(System.Int32)">
+            <summary>
+            Removes specified record.
+            </summary>
+            <param name="recordId">Record Id.</param>
+        </member>
+        <member name="M:FileCabinetApp.IFileCabinetService`2.Purge(System.Int32@)">
+            <summary>
+            Pugres the data file.
+            </summary>
+            <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+            <returns>Purged records count.</returns>
+        </member>
+        <member name="T:FileCabinetApp.Interfaces.IRecordPrinter`1">
+            <summary>
+            Provides records print method.
+            </summary>
+            <typeparam name="T">Record type.</typeparam>
+        </member>
+        <member name="M:FileCabinetApp.Interfaces.IRecordPrinter`1.Print(System.Collections.Generic.IEnumerable{`0})">
+            <summary>
+            Defines records print method.
+            </summary>
+            <param name="records">Сollection of records to print.</param>
+        </member>
+        <member name="T:FileCabinetApp.IRecordValidator`1">
+            <summary>
+            Provides arguments record validator.
+            </summary>
+            <typeparam name="T">Arguments type.</typeparam>
+        </member>
+        <member name="M:FileCabinetApp.IRecordValidator`1.ValidateArguments(`0)">
+            <summary>
+            Validates record arguments.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+        </member>
+        <member name="T:FileCabinetApp.Program">
+            <summary>
+            Provides UI for file cabinet application.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Program.Main(System.String[])">
+            <summary>
+            An application entry point.
+            </summary>
+            <param name="args">Command-line arguments.</param>
+        </member>
+        <member name="T:FileCabinetApp.ServiceLogger">
+            <summary>
+            Provides a file cabinet record service logger.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.ServiceLogger"/> class.
+            </summary>
+            <param name="fileCabinetService">The fileCabinetService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.CreateRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Сreates a record in the list. Writes in file method calling parameters.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <returns>Record ID.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.EditRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Edits a record in the list. Writes in file method calling parameters.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.GetRecords(System.String,System.Func{FileCabinetApp.FileCabinetRecord,System.Boolean})">
+            <summary>
+            Returns records collection.
+            </summary>
+            <param name="filters">Filters string representation.</param>
+            <param name="predicate">Filtering condition.</param>
+            <returns>Readonly records collection.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.GetStat(System.Int32@)">
+            <summary>
+            Returns records count. Writes in file method calling parameters.
+            </summary>
+            <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
+            <returns>Records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.MakeSnapshot(System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord})">
+            <summary>
+            Creates the FileCabinetServiceSnapshot instance. Writes in file method calling parameters.
+            </summary>
+            <param name="records">The records collection for export.</param>
+            <returns>The FileCabinetServiceSnapshot instance.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when records is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.Purge(System.Int32@)">
+            <summary>
+            Pugres the data file.
+            </summary>
+            <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+            <returns>Purged records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.Remove(System.Int32)">
+            <summary>
+            Removes specified record. Writes in file method calling parameters.
+            </summary>
+            <param name="recordId">Record Id.</param>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.Restore(FileCabinetApp.FileCabinetServiceSnapshot)">
+            <summary>
+            Restrores all the containers after import from file. Writes in file method calling parameters.
+            </summary>
+            <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when snapshot is null.</exception>
+            <returns>Restored records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceLogger.Dispose">
+            <summary>
+            Closes stream and writes all buffer deta in the file.
+            </summary>
+        </member>
+        <member name="T:FileCabinetApp.ServiceMeter">
+            <summary>
+            Provides a file cabinet record service meter.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.#ctor(FileCabinetApp.IFileCabinetService{FileCabinetApp.FileCabinetRecord,FileCabinetApp.RecordArguments})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.ServiceMeter"/> class.
+            </summary>
+            <param name="fileCabinetService">The fileCabinetService instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when fileCabinetService is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.CreateRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Сreates a record in the list. Shows elapsed execution time.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <returns>Record ID.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.EditRecord(FileCabinetApp.RecordArguments)">
+            <summary>
+            Edits a record in the list. Shows elapsed execution time.
+            </summary>
+            <param name="arguments">File cabinet record arguments.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.GetRecords(System.String,System.Func{FileCabinetApp.FileCabinetRecord,System.Boolean})">
+            <summary>
+            Returns records collection.
+            </summary>
+            <param name="filters">Filters string representation.</param>
+            <param name="predicate">Filtering condition.</param>
+            <returns>Readonly records collection.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.GetStat(System.Int32@)">
+            <summary>
+            Returns records count. Shows elapsed execution time.
+            </summary>
+            <param name="removedRecordsCount">When this method returns, contains deleted record count.</param>
+            <returns>Records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.MakeSnapshot(System.Collections.Generic.IEnumerable{FileCabinetApp.FileCabinetRecord})">
+            <summary>
+            Creates the FileCabinetServiceSnapshot instance. Shows elapsed execution time.
+            </summary>
+            <param name="records">The records collection for export.</param>
+            <returns>The FileCabinetServiceSnapshot instance.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when records is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.Purge(System.Int32@)">
+            <summary>
+            Pugres the data file.
+            </summary>
+            <param name="totalRecordsBeforePurgeCount">When this method returns, contains total records before purge.</param>
+            <returns>Purged records count.</returns>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.Remove(System.Int32)">
+            <summary>
+            Removes specified record. Shows elapsed execution time.
+            </summary>
+            <param name="recordId">Record Id.</param>
+        </member>
+        <member name="M:FileCabinetApp.ServiceMeter.Restore(FileCabinetApp.FileCabinetServiceSnapshot)">
+            <summary>
+            Restrores all the containers after import from file. Shows elapsed execution time.
+            </summary>
+            <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when snapshot is null.</exception>
+            <returns>Restored records count.</returns>
+        </member>
+        <member name="T:FileCabinetApp.CityValidator">
+            <summary>
+            Provides City validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.CityValidator.Min">
+            <summary>
+            Gets or sets minimum amount of characters.
+            </summary>
+            <value>
+            Minimum amount of characters.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.CityValidator.Max">
+            <summary>
+            Gets or sets maximum amount of characters.
+            </summary>
+            <value>
+            Maximum amount of characters.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.CityValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates City argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null. -or- arguments.City is null.</exception>
+            <exception cref="T:System.ArgumentException">arguments.City.Length should be from Min to Max. arguments.City should not consist only of white-spaces characters.</exception>
+        </member>
+        <member name="T:FileCabinetApp.CompositeValidator">
+            <summary>
+            Provides composite arguments validator.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.CompositeValidator.#ctor(System.Collections.Generic.IEnumerable{FileCabinetApp.IRecordValidator{FileCabinetApp.RecordArguments}})">
+            <summary>
+            Initializes a new instance of the <see cref="T:FileCabinetApp.CompositeValidator"/> class.
+            </summary>
+            <param name="validators">Validators collection.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when validators is null.</exception>
+        </member>
+        <member name="M:FileCabinetApp.CompositeValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates arguments.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+        </member>
+        <member name="T:FileCabinetApp.DateOfBirthValidator">
+            <summary>
+            Provides DateOfBirth validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.DateOfBirthValidator.DateFrom">
+            <summary>
+            Gets or sets minimum date.
+            </summary>
+            <value>
+            Minimum date.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.DateOfBirthValidator.DateTo">
+            <summary>
+            Gets or sets maximum date.
+            </summary>
+            <value>
+            Maximum date.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.DateOfBirthValidator.From">
+            <summary>
+            Gets or sets string representation of minimum date (dd/MM/yyyy format). Using for correct configuration load during serializing.
+            </summary>
+            <value>
+            String representation of minimum date (dd/MM/yyyy format).
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.DateOfBirthValidator.To">
+            <summary>
+            Gets or sets string representation of maximum date (dd/MM/yyyy format). Using for correct configuration load during serializing.
+            </summary>
+            <value>
+            String representation of maximum date (dd/MM/yyyy format).
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.DateOfBirthValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates DateOfBirth argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null. -or- arguments.City is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">arguments.DateOfBirth should be more than DateFrom and not more than DateTo or invalid date format input.</exception>
+        </member>
+        <member name="T:FileCabinetApp.FirstNameValidator">
+            <summary>
+            Provides Firstname validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.FirstNameValidator.Min">
+            <summary>
+            Gets or sets minimum amount of characters.
+            </summary>
+            <value>
+            Minimum amount of characters.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.FirstNameValidator.Max">
+            <summary>
+            Gets or sets maximum amount of characters.
+            </summary>
+            <value>
+            Maximum amount of characters.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.FirstNameValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates FirstName argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null. -or- arguments.FirstName is null.</exception>
+            <exception cref="T:System.ArgumentException">arguments.CFirstNameity.Length should be from Min to Max. arguments.FirstName should not consist only of white-spaces characters.</exception>
+        </member>
+        <member name="T:FileCabinetApp.GenderValidator">
+            <summary>
+            Provides Gender validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.GenderValidator.CharSet">
+            <summary>
+            Gets or sets valid character set.
+            </summary>
+            <value>
+            Valid character set.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.GenderValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates Gender argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null. -or- arguments.City is null.</exception>
+            <exception cref="T:System.ArgumentException">arguments.Gender in not a member of valid characters.</exception>
+        </member>
+        <member name="T:FileCabinetApp.LastNameValidator">
+            <summary>
+            Provides LastName validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.LastNameValidator.Min">
+            <summary>
+            Gets or sets minimum amount of characters.
+            </summary>
+            <value>
+            Minimum amount of characters.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.LastNameValidator.Max">
+            <summary>
+            Gets or sets maximum amount of characters.
+            </summary>
+            <value>
+            Maximum amount of characters.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.LastNameValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates LastName argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null. -or- arguments.LastName is null.</exception>
+            <exception cref="T:System.ArgumentException">arguments.LastName.Length should be from Min to Max. arguments.LastName should not consist only of white-spaces characters.</exception>
+        </member>
+        <member name="T:FileCabinetApp.SalaryValidator">
+            <summary>
+            Provides salary validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.SalaryValidator.Min">
+            <summary>
+            Gets or sets Min salary value.
+            </summary>
+            <value>
+            Min salary value.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.SalaryValidator.Max">
+            <summary>
+            Gets or sets Max salary value.
+            </summary>
+            <value>
+            Max salary value.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.SalaryValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates Salary argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">arguments.Salary is not in the range from Min to Max.</exception>
+        </member>
+        <member name="T:FileCabinetApp.StreetValidator">
+            <summary>
+            Provides default Street argument and input validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.StreetValidator.Min">
+            <summary>
+            Gets or sets minimum amount of characters.
+            </summary>
+            <value>
+            Minimum amount of characters.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.StreetValidator.Max">
+            <summary>
+            Gets or sets maximum amount of characters.
+            </summary>
+            <value>
+            Maximum amount of characters.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.StreetValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates Street argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null. -or- arguments.Street is null.</exception>
+            <exception cref="T:System.ArgumentException">arguments.Street.Length should be from Min to Max. arguments.Street should not consist only of white-spaces characters.</exception>
+        </member>
+        <member name="T:FileCabinetApp.Validators.ValidatorBuilder">
+            <summary>
+            Provides a chain builder to validate records arguments.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateFirstName(System.Int32,System.Int32)">
+            <summary>
+            Adds FirstNameValidator to a validation list.
+            </summary>
+            <param name="minLength">Min symbols count.</param>
+            <param name="maxLength">Max symbols count.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateLastName(System.Int32,System.Int32)">
+            <summary>
+            Adds LastNameValidator to a validation list.
+            </summary>
+            <param name="minLength">Min symbols count.</param>
+            <param name="maxLength">Max symbols count.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateDateOfBirth(System.DateTime,System.DateTime)">
+            <summary>
+            Adds DateOfBirthValidator to a validation list.
+            </summary>
+            <param name="from">Min date value.</param>
+            <param name="to">Max date value.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateZipCode(System.Int16,System.Int16)">
+            <summary>
+            Adds ZipCodeValidator to a validation list.
+            </summary>
+            <param name="minValue">Min zipCode value.</param>
+            <param name="maxValue">Max zipCode value.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateCity(System.Int32,System.Int32)">
+            <summary>
+            Adds CityValidator to a validation list.
+            </summary>
+            <param name="minLength">Min symbols count.</param>
+            <param name="maxLength">Max symbols count.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateStreet(System.Int32,System.Int32)">
+            <summary>
+            Adds StreetValidator to a validation list.
+            </summary>
+            <param name="minLength">Min symbols count.</param>
+            <param name="maxLength">Max symbols count.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateSalary(System.Decimal,System.Decimal)">
+            <summary>
+            Adds SalaryValidator to a validation list.
+            </summary>
+            <param name="minValue">Min salary value.</param>
+            <param name="maxValue">Max salary value.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.ValidateGender(System.String)">
+            <summary>
+            Adds GenderValidator to a validation list.
+            </summary>
+            <param name="chars">A set of valid chars.</param>
+            <returns>A reference to this instance after the add operation has completed.</returns>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilder.Create">
+            <summary>
+            Creates Record validator with a set of validators.
+            </summary>
+            <returns>A RecordValidator instance.</returns>
+        </member>
+        <member name="T:FileCabinetApp.Validators.ValidatorBuilderExtension">
+            <summary>
+            Provides extension methods for ValidatorBuilder.
+            </summary>
+        </member>
+        <member name="M:FileCabinetApp.Validators.ValidatorBuilderExtension.CreateValidator(FileCabinetApp.Validators.ValidatorBuilder,FileCabinetApp.ValidationRulesContainer)">
+            <summary>
+            Returns default arguments validator.
+            </summary>
+            <param name="builder">ValidetorBuilder instance.</param>
+            <param name="container">ValidationRulesContainer instance.</param>
+            <returns>The default arguments validator instance.</returns>
+            <exception cref="T:System.ArgumentNullException">Thrown when builder is null. -or- container is null.</exception>
+        </member>
+        <member name="T:FileCabinetApp.ZipCodeValidator">
+            <summary>
+            Provides default ZipCode argument and input validator.
+            </summary>
+        </member>
+        <member name="P:FileCabinetApp.ZipCodeValidator.Min">
+            <summary>
+            Gets or sets min ZipCode value.
+            </summary>
+            <value>
+            Min ZipCode value.
+            </value>
+        </member>
+        <member name="P:FileCabinetApp.ZipCodeValidator.Max">
+            <summary>
+            Gets or sets max ZipCode value.
+            </summary>
+            <value>
+            Max ZipCode value.
+            </value>
+        </member>
+        <member name="M:FileCabinetApp.ZipCodeValidator.ValidateArguments(FileCabinetApp.RecordArguments)">
+            <summary>
+            Validates ZipCode argument.
+            </summary>
+            <param name="arguments">A set of arguments to validate.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown when arguments is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">arguments.ZipCode is not in the range from Min to Max.</exception>
+        </member>
     </members>
 </doc>
