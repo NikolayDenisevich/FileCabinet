@@ -1,0 +1,68 @@
+{
+  "default": {
+    "firstName": {
+      "Min": 2,
+      "Max": 60
+    },
+    "lastName": {
+      "Min": 2,
+      "Max": 60
+    },
+    "dateOfBirth": {
+      "From": "1/1/1950",
+      "To": "23/3/2020"
+    },
+    "zipCode": {
+      "Min": 1,
+      "Max": 9999
+    },
+    "city": {
+      "Min": 2,
+      "Max": 60
+    },
+    "street": {
+      "Min": 2,
+      "Max": 60
+    },
+    "salary": {
+      "Min": 0,
+      "Max": 100000
+    },
+    "gender": {
+      "Set": "fFmM"
+    }
+  },
+  "custom": {
+    "firstName": {
+      "Min": 3,
+      "Max": 30
+    },
+    "lastName": {
+      "Min": 3,
+      "Max": 30
+    },
+    "dateOfBirth": {
+      "From": "1/1/1950",
+      "To": "1/1/2002"
+    },
+    "zipCode": {
+      "Min": 1000,
+      "Max": 9999
+    },
+    "city": {
+      "Min": 3,
+      "Max": 30
+    },
+    "street": {
+      "Min": 3,
+      "Max": 30
+    },
+    "salary": {
+      "Min": 100,
+      "Max": 5000
+    },
+    "gender": {
+      "Set": "fFmM"
+    }
+  }
+}

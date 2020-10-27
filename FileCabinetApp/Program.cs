@@ -4,6 +4,7 @@ using System.IO;
 using FileCabinetApp.CommandHandlers;
 using FileCabinetApp.Interfaces;
 using FileCabinetApp.Validators;
+using Microsoft.Extensions.Configuration;
 
 namespace FileCabinetApp
 {
@@ -14,13 +15,15 @@ namespace FileCabinetApp
     {
         private const string DeveloperName = "Nikolay Denisevich";
         private const string HintMessage = "Enter your command, or enter 'help' to get help.";
-        private const string DefaultRootDirectory = @"C:\Cabinet";
+        private const string DefaultRootDirectory = @"C:\Cabinet"; // TODO: Fix this path.
         private const string DefaultBinaryFileName = "cabinet-records.db";
+        private const string ValidationConfigFileName = "validation-rules.json";
 
         private static bool isRunning = true;
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService;
         private static IRecordValidator<RecordArguments> recordValidator;
         private static InputValidator inputValidator;
+        private static IConfigurationRoot configuration;
 
         /// <summary>
         /// An application entry point.
@@ -28,9 +31,12 @@ namespace FileCabinetApp
         /// <param name="args">Command-line arguments.</param>
         public static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine($"File Cabinet Application, developed by {Program.DeveloperName}");
+            LoadConfig();
             CheckCommandLineArguments(args);
             ICommandHandler commandHandler = CreateCommandHandlers();
+            Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(Program.HintMessage);
             Console.WriteLine();
 
@@ -56,115 +62,197 @@ namespace FileCabinetApp
 
         private static void CheckCommandLineArguments(string[] args)
         {
+            int index = 0;
+            const string DefaultServerValidationType = "default";
+            const string CustomServerValidationType = "custom";
             if (args is null || args.Length == 0)
             {
-                CreateFileCabinetDefaultServiceInstance(); // TODO:
+                fileCabinetService = CreateFileCabinetMemoryServiceInstance(DefaultServerValidationType); // TODO:
 
                 // CreateFileCabinetFileSystemServiceInstance();
             }
             else
             {
-                switch (args[0].ToUpperInvariant())
+                switch (args[index].ToUpperInvariant())
                 {
                     case "--VALIDATION-RULES=CUSTOM":
                         {
-                            CreateFileCabinetCustomValidationServiceInstance();
+                            var service = CreateFileCabinetMemoryServiceInstance(CustomServerValidationType);
+                            fileCabinetService = CheckNextArg(args, ++index, service);
                             break;
                         }
 
                     case "--VALIDATION-RULES=DEFAULT":
                         {
-                            CreateFileCabinetDefaultServiceInstance();
+                            var service = CreateFileCabinetMemoryServiceInstance(DefaultServerValidationType);
+                            fileCabinetService = CheckNextArg(args, ++index, service);
                             break;
                         }
 
                     case "-V":
                         {
-                            if (args.Length < 2 || args[1].Equals("default", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                CreateFileCabinetDefaultServiceInstance();
-                                break;
-                            }
-
-                            if (args[1].Equals("custom", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                CreateFileCabinetCustomValidationServiceInstance();
-                                break;
-                            }
-                            else
-                            {
-                                CreateFileCabinetDefaultServiceInstance();
-                                break;
-                            }
+                            string validationType = GetValidationValue(args, ++index);
+                            var service = CreateFileCabinetMemoryServiceInstance(validationType);
+                            fileCabinetService = CheckNextArg(args, ++index, service);
+                            break;
                         }
 
                     case "--STORAGE=MEMORY":
                         {
-                            CreateFileCabinetDefaultServiceInstance();
+                            var service = CreateFileCabinetMemoryServiceInstance(DefaultServerValidationType);
+                            fileCabinetService = CheckNextArg(args, ++index, service);
                             break;
                         }
 
                     case "--STORAGE=FILE":
                         {
-                            CreateFileCabinetFileSystemServiceInstance();
+                            var service = CreateFileCabinetFileSystemServiceInstance();
+                            fileCabinetService = CheckNextArg(args, ++index, service);
                             break;
                         }
 
                     case "-S":
                         {
-                            if (args.Length < 2 || args[1].Equals("memory", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                CreateFileCabinetDefaultServiceInstance();
-                                break;
-                            }
-
-                            if (args[1].Equals("file", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                CreateFileCabinetFileSystemServiceInstance();
-                                break;
-                            }
-                            else
-                            {
-                                CreateFileCabinetDefaultServiceInstance();
-                                break;
-                            }
+                            var service = CheckServerStorageType(args, DefaultServerValidationType, ++index);
+                            fileCabinetService = CheckNextArg(args, ++index, service);
+                            break;
                         }
 
                     default:
                         {
-                            CreateFileCabinetDefaultServiceInstance();
+                            var service = CreateFileCabinetMemoryServiceInstance(DefaultServerValidationType);
+                            fileCabinetService = CheckNextArg(args, index, service);
                             break;
                         }
                 }
             }
         }
 
-        private static void CreateFileCabinetFileSystemServiceInstance()
+        private static IFileCabinetService<FileCabinetRecord, RecordArguments> CheckNextArg(string[] args, int nextIndex, IFileCabinetService<FileCabinetRecord, RecordArguments> service)
         {
-            Console.WriteLine("Using default validation rules.");
+            IFileCabinetService<FileCabinetRecord, RecordArguments> nextService;
+            const string StopWatch = "use-stopwatch";
+            const string Logger = "use-logger";
+            if (nextIndex > args.Length - 1)
+            {
+                nextService = service;
+            }
+            else if (args[nextIndex].Equals(StopWatch, StringComparison.InvariantCultureIgnoreCase))
+            {
+                nextService = new ServiceMeter(service);
+                Console.WriteLine("StopWatch activated.");
+            }
+            else if (args[nextIndex].Equals(Logger, StringComparison.InvariantCultureIgnoreCase))
+            {
+                nextService = new ServiceLogger(new ServiceMeter(service));
+                Console.WriteLine("Logging activated.");
+            }
+            else
+            {
+                nextService = service;
+            }
+
+            return nextService;
+        }
+
+        private static string GetValidationValue(string[] args, int index)
+        {
+            const string DefaultServerValidationType = "DEFAULT";
+            const string CustomServerValidationType = "CUSTOM";
+            string result;
+            if (index > args.Length - 1)
+            {
+                Console.WriteLine("<-v> parameter value is wrong or empty. Use <-v custom> or <--validation-rules=custom> " +
+                    "if you want to use custom validation rules (custom validation rules are for memory storage only.).");
+                result = DefaultServerValidationType;
+            }
+            else if (args[index].Equals(DefaultServerValidationType, StringComparison.InvariantCultureIgnoreCase))
+            {
+                result = DefaultServerValidationType;
+            }
+            else if (args[index].Equals(CustomServerValidationType, StringComparison.InvariantCultureIgnoreCase))
+            {
+                result = CustomServerValidationType;
+            }
+            else
+            {
+                Console.WriteLine("<-v> parameter value is wrong or empty. Use <-v custom> or <--validation-rules=custom> " +
+                    "if you want to use custom validation rules (custom validation rules are for memory storage only.).");
+                result = DefaultServerValidationType;
+            }
+
+            return result;
+        }
+
+        private static IFileCabinetService<FileCabinetRecord, RecordArguments> CheckServerStorageType(string[] args, string serverValidationType, int index)
+        {
+            IFileCabinetService<FileCabinetRecord, RecordArguments> service;
+            const string MemoryStorage = "MEMORY";
+            const string FilesystemStorage = "FILE";
+            if (index > args.Length - 1)
+            {
+                Console.WriteLine("<-s> parameter value is wrong or empty. Use <-s file> or <--storage=file> if you want to use filesystem storage.");
+                service = CreateFileCabinetMemoryServiceInstance(serverValidationType);
+            }
+            else if (args[1].Equals(MemoryStorage, StringComparison.InvariantCultureIgnoreCase))
+            {
+                service = CreateFileCabinetMemoryServiceInstance(serverValidationType);
+            }
+            else if (args[1].Equals(FilesystemStorage, StringComparison.InvariantCultureIgnoreCase))
+            {
+                service = CreateFileCabinetFileSystemServiceInstance();
+            }
+            else
+            {
+                Console.WriteLine("<-s> parameter value is wrong or empty. Use <-s file> or <--storage=file> if you want to use filesystem storage.");
+                service = CreateFileCabinetMemoryServiceInstance(serverValidationType);
+            }
+
+            return service;
+        }
+
+        private static IFileCabinetService<FileCabinetRecord, RecordArguments> CreateFileCabinetFileSystemServiceInstance()
+        {
+            const string serverValidationType = "default";
+            Console.WriteLine($"Using {serverValidationType} validation rules.");
             Console.WriteLine("Using filesystem storage.");
-            recordValidator = new ValidatorBuilder().CreateDefaultValidator();
-            inputValidator = new DefaultInputValidator();
+            InitializeValidators(serverValidationType);
             string fullPath = Path.Combine(DefaultRootDirectory, DefaultBinaryFileName);
             FileStream fileStream = File.Open(fullPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            fileCabinetService = new FileCabinetFilesystemService(recordValidator, fileStream);
+            return new FileCabinetFilesystemService(recordValidator, fileStream);
         }
 
-        private static void CreateFileCabinetDefaultServiceInstance()
+        private static void LoadConfig()
         {
-            Console.WriteLine("Using default validation rules.");
+            string configFilePath = Path.Combine(Directory.GetCurrentDirectory(), ValidationConfigFileName);
+            if (File.Exists(configFilePath))
+            {
+                 configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile(ValidationConfigFileName)
+                .Build();
+            }
+            else
+            {
+                Console.WriteLine("Configuration file not found. Application will be closed.");
+                Environment.Exit(-1);
+            }
+        }
+
+        private static IFileCabinetService<FileCabinetRecord, RecordArguments> CreateFileCabinetMemoryServiceInstance(string serverValidationType)
+        {
+            Console.WriteLine($"Using {serverValidationType} validation rules.");
             Console.WriteLine("Using memory storage.");
-            recordValidator = new ValidatorBuilder().CreateDefaultValidator();
-            inputValidator = new DefaultInputValidator();
-            fileCabinetService = new FileCabinetMemoryService(recordValidator);
+            InitializeValidators(serverValidationType);
+            return new FileCabinetMemoryService(recordValidator);
         }
 
-        private static void CreateFileCabinetCustomValidationServiceInstance()
+        private static void InitializeValidators(string serverValidationType)
         {
-            Console.WriteLine("Using custom validation rules.");
-            recordValidator = new ValidatorBuilder().CreateCustomValidator();
-            inputValidator = new CustomInputValidator();
-            fileCabinetService = new FileCabinetMemoryService(recordValidator);
+            var defaultSection = configuration.GetSection(serverValidationType);
+            var validationRules = new ValidationRulesContainer(defaultSection);
+            recordValidator = new ValidatorBuilder().CreateValidator(validationRules);
+            inputValidator = new InputValidator(validationRules);
         }
 
         private static ICommandHandler CreateCommandHandlers()

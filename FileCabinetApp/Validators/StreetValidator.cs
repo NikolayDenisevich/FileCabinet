@@ -10,19 +10,21 @@ namespace FileCabinetApp
     /// </summary>
     internal class StreetValidator : IRecordValidator<RecordArguments>
     {
-        private int minLength;
-        private int maxLength;
+        /// <summary>
+        /// Gets or sets minimum amount of characters.
+        /// </summary>
+        /// <value>
+        /// Minimum amount of characters.
+        /// </value>
+        public int Min { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="StreetValidator"/> class.
+        /// Gets or sets maximum amount of characters.
         /// </summary>
-        /// <param name="minLength">Min symbols count.</param>
-        /// <param name="maxLength">Max symbols count.</param>
-        public StreetValidator(int minLength, int maxLength)
-        {
-            this.minLength = minLength;
-            this.maxLength = maxLength;
-        }
+        /// <value>
+        /// Maximum amount of characters.
+        /// </value>
+        public int Max { get; set; }
 
         /// <summary>
         /// Validates Street argument.
@@ -35,9 +37,9 @@ namespace FileCabinetApp
                 throw new ArgumentNullException($"{nameof(arguments.Street)} is null");
             }
 
-            if (arguments.Street.Length < this.minLength || arguments.Street.Length > this.maxLength)
+            if (arguments.Street.Length < this.Min || arguments.Street.Length > this.Max)
             {
-                throw new ArgumentException($"{nameof(arguments.Street)}.Length should be from {this.minLength} to {this.maxLength}. {nameof(arguments.Street)} should not consist only of white-spaces characters");
+                throw new ArgumentException($"{nameof(arguments.Street)}.Length should be from {this.Min} to {this.Max}. {nameof(arguments.Street)} should not consist only of white-spaces characters");
             }
         }
     }

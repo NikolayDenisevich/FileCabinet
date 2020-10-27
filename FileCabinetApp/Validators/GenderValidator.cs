@@ -4,19 +4,41 @@ using System.Text;
 namespace FileCabinetApp
 {
     /// <summary>
-    /// Provides default Gender argument and input validator.
+    /// Provides Gender validator.
     /// </summary>
     internal class GenderValidator : IRecordValidator<RecordArguments>
     {
-        private char[] chars;
+        /// <summary>
+        /// Gets or sets valid character set.
+        /// </summary>
+        /// <value>
+        /// Valid character set.
+        /// </value>
+        public char[] CharSet { get; set; } = Array.Empty<char>();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="GenderValidator"/> class.
+        /// Gets or sets string representation of valid character set. Using for correct configuration load during serializing.
         /// </summary>
-        /// <param name="chars">A set of valid chars.</param>
-        public GenderValidator(params char[] chars)
+        /// <value>
+        /// String representation of valid character set valid character set.
+        /// </value>
+        public string Set
         {
-            this.chars = chars;
+            get
+            {
+                var builder = new StringBuilder();
+                foreach (var item in this.CharSet)
+                {
+                    builder.Append(item);
+                }
+
+                return builder.ToString();
+            }
+
+            set
+            {
+                this.CharSet = value.ToCharArray();
+            }
         }
 
         /// <summary>
@@ -26,7 +48,7 @@ namespace FileCabinetApp
         public void ValidateArguments(RecordArguments arguments)
         {
             bool isValid = false;
-            foreach (var item in this.chars)
+            foreach (var item in this.CharSet)
             {
                 if (arguments.Gender == item)
                 {
@@ -38,14 +60,14 @@ namespace FileCabinetApp
             if (!isValid)
             {
                 var builder = new StringBuilder();
-                for (int i = 0; i < this.chars.Length - 1; i++)
+                for (int i = 0; i < this.CharSet.Length - 1; i++)
                 {
-                    builder.Append($"'{this.chars[i]}', ");
+                    builder.Append($"'{this.CharSet[i]}', ");
                 }
 
-                builder.Append($"'{this.chars[^1]}'.");
+                builder.Append($"'{this.CharSet[^1]}'.");
 
-                throw new ArgumentException($"{nameof(arguments.Gender)} permissible values are :{builder.ToString()}");
+                throw new ArgumentException($"{nameof(arguments.Gender)} permissible values are :{builder}");
             }
         }
     }

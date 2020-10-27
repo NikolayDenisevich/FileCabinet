@@ -4,22 +4,60 @@ using System.Globalization;
 namespace FileCabinetApp
 {
     /// <summary>
-    /// Provides default DateOfBirth argument and input validator.
+    /// Provides DateOfBirth validator.
     /// </summary>
     internal class DateOfBirthValidator : IRecordValidator<RecordArguments>
     {
-        private DateTime from;
-        private DateTime to;
+        /// <summary>
+        /// Gets or sets minimum date.
+        /// </summary>
+        /// <value>
+        /// Minimum date.
+        /// </value>
+        public DateTime DateFrom { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="DateOfBirthValidator"/> class.
+        /// Gets or sets maximum date.
         /// </summary>
-        /// <param name="from">Min date.</param>
-        /// <param name="to">Max date.</param>
-        public DateOfBirthValidator(DateTime from, DateTime to)
+        /// <value>
+        /// Maximum date.
+        /// </value>
+        public DateTime DateTo { get; set; }
+
+        /// <summary>
+        /// Gets or sets string representation of minimum date (dd/MM/yyyy format). Using for correct configuration load during serializing.
+        /// </summary>
+        /// <value>
+        /// String representation of minimum date (dd/MM/yyyy format).
+        /// </value>
+        public string From
         {
-            this.from = from;
-            this.to = to;
+            get => this.DateFrom.ToString("dd/MM/yyyy", DateTimeFormatInfo.InvariantInfo);
+
+            set
+            {
+                DateTime result;
+                _ = DateTime.TryParse(value, out result);
+                this.DateFrom = result;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets string representation of maximum date (dd/MM/yyyy format). Using for correct configuration load during serializing.
+        /// </summary>
+        /// <value>
+        /// String representation of maximum date (dd/MM/yyyy format).
+        /// </value>
+        public string To
+        {
+            get => this.DateTo.ToString("dd/MM/yyyy", DateTimeFormatInfo.InvariantInfo);
+
+            set
+            {
+                DateTime result;
+                _ = DateTime.TryParse(value, out result);
+                this.DateTo = result;
+            }
         }
 
         /// <summary>
@@ -28,9 +66,9 @@ namespace FileCabinetApp
         /// <param name="arguments">A set of arguments to validate.</param>
         public void ValidateArguments(RecordArguments arguments)
         {
-            if (arguments.DateOfBirth < this.from || arguments.DateOfBirth >= this.to)
+            if (arguments.DateOfBirth < this.DateFrom || arguments.DateOfBirth >= this.DateTo)
             {
-                throw new ArgumentException($"{nameof(arguments.DateOfBirth)} should be more than {this.from.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} and not more than {this.to.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} or invalid date format input");
+                throw new ArgumentException($"{nameof(arguments.DateOfBirth)} should be more than {this.DateFrom.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} and not more than {this.DateTo.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} or invalid date format input");
             }
         }
     }

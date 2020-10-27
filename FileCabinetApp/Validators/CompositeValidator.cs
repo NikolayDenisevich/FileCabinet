@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace FileCabinetApp
 {
     /// <summary>
-    /// Provides composite arguments and input validator.
+    /// Provides composite arguments validator.
     /// </summary>
     internal class CompositeValidator : IRecordValidator<RecordArguments>
     {

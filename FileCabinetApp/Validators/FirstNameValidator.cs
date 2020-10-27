@@ -3,23 +3,25 @@
 namespace FileCabinetApp
 {
     /// <summary>
-    /// Provides default Firstname and input validator.
+    /// Provides Firstname validator.
     /// </summary>
     internal class FirstNameValidator : IRecordValidator<RecordArguments>
     {
-        private int minLength;
-        private int maxLength;
+        /// <summary>
+        /// Gets or sets minimum amount of characters.
+        /// </summary>
+        /// <value>
+        /// Minimum amount of characters.
+        /// </value>
+        public int Min { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FirstNameValidator"/> class.
+        /// Gets or sets maximum amount of characters.
         /// </summary>
-        /// <param name="minLength">Min symbols count.</param>
-        /// <param name="maxLength">Max symbols count.</param>
-        public FirstNameValidator(int minLength, int maxLength)
-        {
-            this.minLength = minLength;
-            this.maxLength = maxLength;
-        }
+        /// <value>
+        /// Maximum amount of characters.
+        /// </value>
+        public int Max { get; set; }
 
         /// <summary>
         /// Validates FirstName argument.
@@ -32,9 +34,9 @@ namespace FileCabinetApp
                 throw new ArgumentNullException($"{nameof(arguments.FirstName)} is null");
             }
 
-            if (arguments.FirstName.Length < this.minLength || arguments.FirstName.Length > this.maxLength)
+            if (arguments.FirstName.Length < this.Min || arguments.FirstName.Length > this.Max)
             {
-                throw new ArgumentException($"{nameof(arguments.FirstName)}.Length should be from {this.minLength} to {this.maxLength}. {nameof(arguments.FirstName)} should not consist only of white-spaces characters");
+                throw new ArgumentException($"{nameof(arguments.FirstName)}.Length should be from {this.Min} to {this.Max}. {nameof(arguments.FirstName)} should not consist only of white-spaces characters");
             }
         }
     }

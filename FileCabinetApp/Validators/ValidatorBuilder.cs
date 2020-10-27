@@ -19,7 +19,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateFirstName(int minLength, int maxLength)
         {
-            this.validators.Add(new FirstNameValidator(minLength, maxLength));
+            this.validators.Add(new FirstNameValidator { Min = minLength, Max = maxLength });
             return this;
         }
 
@@ -31,7 +31,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateLastName(int minLength, int maxLength)
         {
-            this.validators.Add(new LastNameValidator(minLength, maxLength));
+            this.validators.Add(new LastNameValidator { Min = minLength, Max = maxLength });
             return this;
         }
 
@@ -43,7 +43,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateDateOfBirth(DateTime from, DateTime to)
         {
-            this.validators.Add(new DateOfBirthValidator(from, to));
+            this.validators.Add(new DateOfBirthValidator { DateFrom = from, DateTo = to });
             return this;
         }
 
@@ -55,7 +55,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateZipCode(short minValue, short maxValue)
         {
-            this.validators.Add(new ZipCodeValidator(minValue, maxValue));
+            this.validators.Add(new ZipCodeValidator { Min = minValue, Max = maxValue });
             return this;
         }
 
@@ -67,7 +67,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateCity(int minLength, int maxLength)
         {
-            this.validators.Add(new CityValidator(minLength, maxLength));
+            this.validators.Add(new CityValidator { Min = minLength, Max = maxLength });
             return this;
         }
 
@@ -79,7 +79,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateStreet(int minLength, int maxLength)
         {
-            this.validators.Add(new StreetValidator(minLength, maxLength));
+            this.validators.Add(new StreetValidator { Min = minLength, Max = maxLength });
             return this;
         }
 
@@ -91,7 +91,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateSalary(decimal minValue, decimal maxValue)
         {
-            this.validators.Add(new SalaryValidator(minValue, maxValue));
+            this.validators.Add(new SalaryValidator { Min = minValue, Max = maxValue });
             return this;
         }
 
@@ -102,7 +102,7 @@ namespace FileCabinetApp.Validators
         /// <returns>A reference to this instance after the add operation has completed.</returns>
         public ValidatorBuilder ValidateGender(params char[] chars)
         {
-            this.validators.Add(new GenderValidator(chars));
+            this.validators.Add(new GenderValidator { CharSet = chars });
             return this;
         }
 

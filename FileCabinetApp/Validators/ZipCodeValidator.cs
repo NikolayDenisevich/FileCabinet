@@ -7,19 +7,21 @@ namespace FileCabinetApp
     /// </summary>
     internal class ZipCodeValidator : IRecordValidator<RecordArguments>
     {
-        private short minValue;
-        private short maxValue;
+        /// <summary>
+        /// Gets or sets min ZipCode value.
+        /// </summary>
+        /// <value>
+        /// Min ZipCode value.
+        /// </value>
+        public short Min { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ZipCodeValidator"/> class.
+        /// Gets or sets max ZipCode value.
         /// </summary>
-        /// <param name="minValue">Min zipCode value.</param>
-        /// <param name="maxValue">Max zipCode value.</param>
-        public ZipCodeValidator(short minValue, short maxValue)
-        {
-            this.minValue = minValue;
-            this.maxValue = maxValue;
-        }
+        /// <value>
+        /// Max ZipCode value.
+        /// </value>
+        public short Max { get; set; }
 
         /// <summary>
         /// Validates ZipCode argument.
@@ -27,9 +29,9 @@ namespace FileCabinetApp
         /// <param name="arguments">A set of arguments to validate.</param>
         public void ValidateArguments(RecordArguments arguments)
         {
-            if (arguments.ZipCode < this.minValue || arguments.ZipCode > this.maxValue)
+            if (arguments.ZipCode < this.Min || arguments.ZipCode > this.Max)
             {
-                throw new ArgumentOutOfRangeException($"{nameof(arguments.ZipCode)} range is {this.minValue}..{this.maxValue}");
+                throw new ArgumentOutOfRangeException($"{nameof(arguments.ZipCode)} range is {this.Min}..{this.Max}");
             }
         }
     }
