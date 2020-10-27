@@ -18,8 +18,13 @@ namespace FileCabinetApp
         private const int FullDateOfBirthLengthInBytes = 12;
         private const int FirstNameOffset = 6;
         private const int LastNameOffset = 126;
+        private const string StatePath = @"C:\Cabinet\state.bin";
+        private const string DefaultBinaryFilePath = @"C:\Cabinet\cabinet-records.db";
         private readonly FileStream fileStream;
         private readonly IRecordValidator<RecordArguments> validator;
+        private int currentRecordsCount;
+        private int lastRecordsId;
+        private bool isRecordReadedFromFile;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetFilesystemService"/> class.
@@ -40,6 +45,82 @@ namespace FileCabinetApp
 
             this.validator = validator;
             this.fileStream = fileStream;
+            this.RestoreState();
+        }
+
+        /// <summary>
+        /// Creates the FileCabinetServiceSnapshot instance.
+        /// </summary>
+        /// <param name="records">The records collection for export.</param>
+        /// <returns>The FileCabinetServiceSnapshot instance.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
+        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
+        {
+            if (records is null)
+            {
+                throw new ArgumentNullException($"{nameof(records)} is null");
+            }
+
+            return new FileCabinetServiceSnapshot(records);
+        }
+
+        /// <summary>
+        /// Restrores all the containers after import from file.
+        /// </summary>
+        /// <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when snapshot is null.</exception>
+        /// <returns>Restored records count.</returns>
+        public int Restore(FileCabinetServiceSnapshot snapshot)
+        {
+            if (snapshot is null)
+            {
+                throw new ArgumentNullException($"{nameof(snapshot)} is null");
+            }
+
+            int validRecordsCount = 0;
+            IReadOnlyCollection<FileCabinetRecord> records = snapshot.Records;
+
+            foreach (var newItem in records)
+            {
+                RecordArguments newItemArguments = new RecordArguments
+                {
+                    Id = newItem.Id,
+                    FirstName = newItem.FirstName,
+                    LastName = newItem.LastName,
+                    DateOfBirth = newItem.DateOfBirth,
+                    ZipCode = newItem.ZipCode,
+                    City = newItem.City,
+                    Street = newItem.Street,
+                    Salary = newItem.Salary,
+                    Gender = newItem.Gender,
+                };
+
+                try
+                {
+                    this.validator.ValidateArguments(newItemArguments);
+                }
+                catch (ArgumentException exception)
+                {
+                    Console.WriteLine($"Record #{newItem.Id} failed validation. {exception.Message}");
+                    continue;
+                }
+
+                long foundRecordPosition = this.FindRecordPosition(newItem.Id);
+
+                if (foundRecordPosition is -1)
+                {
+                    this.isRecordReadedFromFile = true;
+                    this.CreateRecord(newItemArguments);
+                }
+                else
+                {
+                    this.EditExistingRecord(newItemArguments, foundRecordPosition);
+                }
+
+                validRecordsCount++;
+            }
+
+            return validRecordsCount;
         }
 
         /// <summary>
@@ -62,17 +143,31 @@ namespace FileCabinetApp
             }
 
             this.validator.ValidateArguments(arguments);
-
-            int lastId = this.GetStat();
             using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
             {
                 binaryWriter.Seek(sizeof(short), SeekOrigin.End);
-                binaryWriter.Write(++lastId);
-                this.WriteAllArgumentsExceptId(arguments, binaryWriter);
-                binaryWriter.Close();
+                if (!this.isRecordReadedFromFile)
+                {
+                    arguments.Id = ++this.lastRecordsId;
+                    this.WriteArguments(arguments, binaryWriter);
+                    binaryWriter.Close();
+                }
+                else
+                {
+                    this.WriteArguments(arguments, binaryWriter);
+                    binaryWriter.Close();
+                    if (arguments.Id > this.lastRecordsId)
+                    {
+                        this.lastRecordsId = arguments.Id;
+                    }
+                }
             }
 
-            return lastId;
+            this.isRecordReadedFromFile = default;
+            this.currentRecordsCount++;
+            var lastWriteTime = DateTime.Now;
+            this.SaveState(lastWriteTime);
+            return this.lastRecordsId;
         }
 
         /// <summary>
@@ -101,12 +196,7 @@ namespace FileCabinetApp
                 throw new ArgumentException($"There is no record #{arguments.Id} in the file.");
             }
 
-            using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
-            {
-                this.fileStream.Seek(sizeof(short) + foundRecordPosition, SeekOrigin.Begin);
-                this.WriteAllArgumentsExceptId(arguments, binaryWriter);
-                binaryWriter.Close();
-            }
+            this.EditExistingRecord(arguments, foundRecordPosition);
         }
 
         /// <summary>
@@ -115,7 +205,7 @@ namespace FileCabinetApp
         /// <param name="dateOfBirth">Search key.</param>
         /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
         /// <exception cref="ArgumentException">Thrown when dateOfBirth is less than 01-Jan-1950 and more than now.</exception>
-        public ReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
+        public IReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
         {
             var list = new List<FileCabinetRecord>();
             using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
@@ -131,7 +221,8 @@ namespace FileCabinetApp
                     if (currentYear == dateOfBirth.Year && currentMonth == dateOfBirth.Month && currentDay == dateOfBirth.Day)
                     {
                         long startReadPosition = this.fileStream.Position - FullDateOfBirthLengthInBytes - DateOfBirthOffset;
-                        this.ReadRecordFromFileToBuffer(list, reader, startReadPosition);
+                        FileCabinetRecord record = this.ReadRecordFromFile(reader, startReadPosition);
+                        list.Add(record);
                     }
                 }
 
@@ -148,7 +239,7 @@ namespace FileCabinetApp
         /// <returns>A sequence of records containing the name 'firstname'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
         /// <exception cref="ArgumentException">Thrown when firstname length less than 2 or more than 60.</exception>
-        public ReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
+        public IReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
         {
             List<FileCabinetRecord> list = this.CreateRecordsByNamesCollection(firstName, FirstNameOffset);
 
@@ -162,7 +253,7 @@ namespace FileCabinetApp
         /// <returns>A sequence of records containing the name 'lastName'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
         /// <exception cref="ArgumentException">Thrown when lastName length less than 2 or more than 60.</exception>
-        public ReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
+        public IReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
         {
             List<FileCabinetRecord> list = this.CreateRecordsByNamesCollection(lastName, LastNameOffset);
 
@@ -173,7 +264,7 @@ namespace FileCabinetApp
         /// Returns the collection of all records.
         /// </summary>
         /// <returns>The collection of all records.</returns>
-        public ReadOnlyCollection<FileCabinetRecord> GetRecords()
+        public IReadOnlyCollection<FileCabinetRecord> GetRecords()
         {
             var list = new List<FileCabinetRecord>();
             using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
@@ -182,7 +273,8 @@ namespace FileCabinetApp
                 int recordsCounter = 0;
                 while (reader.PeekChar() != -1)
                 {
-                    this.ReadRecordFromFileToBuffer(list, reader, recordsCounter * OneRecordFullLengthInBytes);
+                    FileCabinetRecord record = this.ReadRecordFromFile(reader, recordsCounter * OneRecordFullLengthInBytes);
+                    list.Add(record);
                     recordsCounter++;
                 }
 
@@ -198,25 +290,10 @@ namespace FileCabinetApp
         /// <returns>Records count.</returns>
         public int GetStat()
         {
-            int lastRecordId;
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
-            {
-                this.fileStream.Seek(sizeof(short), SeekOrigin.Begin);
-                if (reader.PeekChar() == -1)
-                {
-                    return 0;
-                }
-
-                int lastRecordIdOffset = OneRecordFullLengthInBytes - sizeof(short);
-                this.fileStream.Seek(-lastRecordIdOffset, SeekOrigin.End);
-                lastRecordId = reader.ReadInt32();
-                reader.Close();
-            }
-
-            return lastRecordId;
+            return this.currentRecordsCount;
         }
 
-        private void ReadRecordFromFileToBuffer(List<FileCabinetRecord> buffer, BinaryReader reader, long fileStreamPosition)
+        private FileCabinetRecord ReadRecordFromFile(BinaryReader reader, long fileStreamPosition)
         {
             var record = new FileCabinetRecord();
             this.fileStream.Seek(fileStreamPosition, SeekOrigin.Begin);
@@ -238,11 +315,12 @@ namespace FileCabinetApp
             this.MoveStreamToNextPositionAfterString(record.Street);
             record.Salary = reader.ReadDecimal();
             record.Gender = reader.ReadChar();
-            buffer.Add(record);
+            return record;
         }
 
-        private void WriteAllArgumentsExceptId(RecordArguments arguments, BinaryWriter binaryWriter)
+        private void WriteArguments(RecordArguments arguments, BinaryWriter binaryWriter)
         {
+            binaryWriter.Write(arguments.Id);
             binaryWriter.Write(arguments.FirstName);
             this.MoveStreamToNextPositionAfterString(arguments.FirstName);
             binaryWriter.Write(arguments.LastName);
@@ -277,7 +355,7 @@ namespace FileCabinetApp
                     if (currentId == id)
                     {
                         reader.Close();
-                        return this.fileStream.Position - sizeof(short);
+                        return this.fileStream.Position - sizeof(int) - sizeof(short);
                     }
                 }
             }
@@ -299,7 +377,8 @@ namespace FileCabinetApp
                     if (currentFirstName.Equals(firstName, StringComparison.InvariantCultureIgnoreCase))
                     {
                         long startReadPosition = this.fileStream.Position - ((currentFirstName.Length * BytesInOneUnicodeSymbol) + 1) - nameOffset;
-                        this.ReadRecordFromFileToBuffer(list, reader, startReadPosition);
+                        FileCabinetRecord record = this.ReadRecordFromFile(reader, startReadPosition);
+                        list.Add(record);
                     }
                 }
 
@@ -307,6 +386,132 @@ namespace FileCabinetApp
             }
 
             return list;
+        }
+
+        private FileCabinetRecord ReadRecordById(int id)
+        {
+            long foundRecordPosition = this.FindRecordPosition(id);
+
+            if (foundRecordPosition is -1)
+            {
+                return default;
+            }
+
+            FileCabinetRecord record;
+            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
+            {
+                record = this.ReadRecordFromFile(reader, foundRecordPosition);
+            }
+
+            return record;
+        }
+
+        private (int, int) GetActualStateFromFile()
+        {
+            int maxId = 0;
+            int recordsCount = 0;
+            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
+            {
+                this.fileStream.Seek(sizeof(short), SeekOrigin.Begin);
+                if (reader.PeekChar() == -1)
+                {
+                    return (recordsCount, maxId);
+                }
+
+                while (reader.PeekChar() != -1)
+                {
+                    this.fileStream.Seek(sizeof(short) + (OneRecordFullLengthInBytes * recordsCount), SeekOrigin.Begin);
+                    int currentId = reader.ReadInt32();
+                    if (currentId > maxId)
+                    {
+                        maxId = currentId;
+                    }
+
+                    this.fileStream.Seek(OneRecordFullLengthInBytes * (recordsCount + 1), SeekOrigin.Begin);
+                    recordsCount++;
+                }
+
+                reader.Close();
+            }
+
+            return (recordsCount, maxId);
+        }
+
+        private void EditExistingRecord(RecordArguments arguments, long recordPosition)
+        {
+            using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
+            {
+                this.fileStream.Seek(sizeof(short) + recordPosition, SeekOrigin.Begin);
+                this.WriteArguments(arguments, binaryWriter);
+                binaryWriter.Close();
+            }
+        }
+
+        private void SaveState(DateTime lastWrite)
+        {
+            FileStream stateStream;
+            if (File.Exists(StatePath))
+            {
+                stateStream = File.Open(StatePath, FileMode.Open, FileAccess.Write);
+            }
+            else
+            {
+                stateStream = File.Open(StatePath, FileMode.CreateNew, FileAccess.Write);
+            }
+
+            using (BinaryWriter binaryWriter = new BinaryWriter(stateStream, Encoding.Unicode, false))
+            {
+                binaryWriter.Seek(0, SeekOrigin.Begin);
+                binaryWriter.Write(this.currentRecordsCount);
+                binaryWriter.Write(this.lastRecordsId);
+                binaryWriter.Write(lastWrite.Year);
+                binaryWriter.Write(lastWrite.Month);
+                binaryWriter.Write(lastWrite.Day);
+                binaryWriter.Write(lastWrite.Hour);
+                binaryWriter.Write(lastWrite.Minute);
+                binaryWriter.Write(lastWrite.Second);
+            }
+        }
+
+        private void RestoreState()
+        {
+            FileStream stateStream;
+            if (File.Exists(StatePath))
+            {
+                stateStream = File.Open(StatePath, FileMode.Open, FileAccess.Read);
+                using (BinaryReader binaryReader = new BinaryReader(stateStream, Encoding.Unicode, false))
+                {
+                    stateStream.Seek(0, SeekOrigin.Begin);
+                    int readedRecordsCount = binaryReader.ReadInt32();
+                    int readedLastRecordsId = binaryReader.ReadInt32();
+                    int readedYear = binaryReader.ReadInt32();
+                    int readedMonth = binaryReader.ReadInt32();
+                    int readedDay = binaryReader.ReadInt32();
+                    int readedHour = binaryReader.ReadInt32();
+                    int readedMinute = binaryReader.ReadInt32();
+                    int readedSecond = binaryReader.ReadInt32();
+                    DateTime readedWriteDate = new DateTime(readedYear, readedMonth, readedDay, readedHour, readedMinute, readedSecond);
+                    DateTime actualWriteDate = File.GetLastWriteTime(DefaultBinaryFilePath);
+                    TimeSpan span = readedWriteDate - actualWriteDate;
+                    if (span.TotalSeconds < 3)
+                    {
+                        this.currentRecordsCount = readedRecordsCount;
+                        this.lastRecordsId = readedLastRecordsId;
+                    }
+                    else
+                    {
+                        var state = this.GetActualStateFromFile();
+                        this.currentRecordsCount = state.Item1;
+                        this.lastRecordsId = state.Item2;
+                    }
+                }
+            }
+            else
+            {
+                var state = this.GetActualStateFromFile();
+                this.currentRecordsCount = state.Item1;
+                this.lastRecordsId = state.Item2;
+            }
         }
     }
 }

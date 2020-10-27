@@ -37,7 +37,7 @@ namespace FileCabinetApp
         /// <param name="records">The records collection for export.</param>
         /// <returns>The FileCabinetServiceSnapshot instance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public static FileCabinetServiceSnapshot MakeSnapshot(ReadOnlyCollection<FileCabinetRecord> records)
+        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
         {
             if (records is null)
             {
@@ -45,6 +45,63 @@ namespace FileCabinetApp
             }
 
             return new FileCabinetServiceSnapshot(records);
+        }
+
+        /// <summary>
+        /// Restrores all the containers after import from file.
+        /// </summary>
+        /// <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when snapshot is null.</exception>
+        /// <returns>Restored records count.</returns>
+        public int Restore(FileCabinetServiceSnapshot snapshot)
+        {
+            if (snapshot is null)
+            {
+                throw new ArgumentNullException($"{nameof(snapshot)} is null");
+            }
+
+            int validRecordsCount = 0;
+            IReadOnlyCollection<FileCabinetRecord> records = snapshot.Records;
+            foreach (var newItem in records)
+            {
+                RecordArguments newItemArguments = new RecordArguments
+                {
+                    Id = newItem.Id,
+                    FirstName = newItem.FirstName,
+                    LastName = newItem.LastName,
+                    DateOfBirth = newItem.DateOfBirth,
+                    ZipCode = newItem.ZipCode,
+                    City = newItem.City,
+                    Street = newItem.Street,
+                    Salary = newItem.Salary,
+                    Gender = newItem.Gender,
+                };
+                try
+                {
+                    this.validator.ValidateArguments(newItemArguments);
+                }
+                catch (ArgumentException exception)
+                {
+                    Console.WriteLine($"Record #{newItem.Id} failed validation. {exception.Message}");
+                    continue;
+                }
+
+                FileCabinetRecord existingRecord = this.list.Find(r => r.Id == newItem.Id);
+
+                if (existingRecord != null)
+                {
+                    this.EditEntryInAllContainers(newItemArguments, existingRecord);
+                }
+                else
+                {
+                    this.AddEntryInAllContainers(newItem);
+                }
+
+                validRecordsCount++;
+            }
+
+            this.list.Sort((r1, r2) => r1.Id.CompareTo(r2.Id));
+            return validRecordsCount;
         }
 
         /// <summary>
@@ -67,10 +124,10 @@ namespace FileCabinetApp
             }
 
             this.validator.ValidateArguments(arguments);
-
+            int lastRecordId = this.GetLastRecordId();
             var record = new FileCabinetRecord
             {
-                Id = this.list.Count + 1,
+                Id = lastRecordId + 1,
                 FirstName = arguments.FirstName,
                 LastName = arguments.LastName,
                 DateOfBirth = arguments.DateOfBirth,
@@ -81,12 +138,7 @@ namespace FileCabinetApp
                 Gender = arguments.Gender,
             };
 
-            this.list.Add(record);
-#pragma warning disable CA1062 // Validate arguments of public methods
-            AddRecordToDictionary(arguments.FirstName, record, this.firstNameDictionary);
-            AddRecordToDictionary(arguments.LastName, record, this.lastNameDictionary);
-#pragma warning restore CA1062 // Validate arguments of public methods
-            AddRecordToDictionary(arguments.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), record, this.dateOfBirthDictionary);
+            this.AddEntryInAllContainers(record);
 
             return record.Id;
         }
@@ -117,23 +169,7 @@ namespace FileCabinetApp
                 throw new ArgumentException($"There is no record #{arguments.Id} in the list.");
             }
 
-            string oldFirstName = listRecord.FirstName;
-            string oldLastName = listRecord.LastName;
-            string oldDateOfBirth = listRecord.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo);
-            listRecord.FirstName = arguments.FirstName;
-            listRecord.LastName = arguments.LastName;
-            listRecord.DateOfBirth = arguments.DateOfBirth;
-            listRecord.ZipCode = arguments.ZipCode;
-            listRecord.City = arguments.City;
-            listRecord.Street = arguments.Street;
-            listRecord.Salary = arguments.Salary;
-            listRecord.Gender = arguments.Gender;
-
-#pragma warning disable CA1062 // Validate arguments of public methods
-            EditRecordInDictionary(oldFirstName, arguments.FirstName, arguments.Id, listRecord, this.firstNameDictionary);
-            EditRecordInDictionary(oldLastName, arguments.LastName, arguments.Id, listRecord, this.lastNameDictionary);
-#pragma warning restore CA1062 // Validate arguments of public methods
-            EditRecordInDictionary(oldDateOfBirth, arguments.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), arguments.Id, listRecord, this.dateOfBirthDictionary);
+            this.EditEntryInAllContainers(arguments, listRecord);
         }
 
         /// <summary>
@@ -143,7 +179,7 @@ namespace FileCabinetApp
         /// <returns>A sequence of records containing the name 'firstname'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
         /// <exception cref="ArgumentException">Thrown when firstname length less than 2 or more than 60.</exception>
-        public ReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
+        public IReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
         {
             if (firstName is null)
             {
@@ -165,7 +201,7 @@ namespace FileCabinetApp
         /// <returns>A sequence of records containing the name 'lastName'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
         /// <exception cref="ArgumentException">Thrown when lastName length less than 2 or more than 60.</exception>
-        public ReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
+        public IReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
         {
             if (lastName is null)
             {
@@ -186,13 +222,13 @@ namespace FileCabinetApp
         /// <param name="dateOfBirth">Search key.</param>
         /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
         /// <exception cref="ArgumentException">Thrown when dateOfBirth is less than 01-Jan-1950 and more than now.</exception>
-        public ReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth) => GetRecordsFromDictionary(dateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), this.dateOfBirthDictionary);
+        public IReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth) => GetRecordsFromDictionary(dateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), this.dateOfBirthDictionary);
 
         /// <summary>
         /// Returns the collection of all records.
         /// </summary>
         /// <returns>The collection of all records.</returns>
-        public ReadOnlyCollection<FileCabinetRecord> GetRecords()
+        public IReadOnlyCollection<FileCabinetRecord> GetRecords()
         {
             return new ReadOnlyCollection<FileCabinetRecord>(this.list);
         }
@@ -218,28 +254,26 @@ namespace FileCabinetApp
         private static void EditRecordInDictionary(string oldName, string newName, int id, FileCabinetRecord record, Dictionary<string, List<FileCabinetRecord>> dictionary)
         {
             List<FileCabinetRecord> valuesList;
-            if (oldName.Equals(newName, StringComparison.InvariantCultureIgnoreCase))
-            {
-                dictionary.TryGetValue(oldName.ToUpperInvariant(), out valuesList);
-                FileCabinetRecord dictionaryRecord = valuesList.Find(i => i.Id == id);
-                dictionaryRecord = record;
-            }
-            else
+            if (!oldName.Equals(newName, StringComparison.InvariantCultureIgnoreCase))
             {
                 dictionary.TryGetValue(oldName.ToUpperInvariant(), out valuesList);
                 FileCabinetRecord oldDictionaryRecord = valuesList.Find(i => i.Id == id);
                 valuesList.Remove(oldDictionaryRecord);
-            }
+                if (valuesList.Count is 0)
+                {
+                    dictionary.Remove(oldName.ToUpperInvariant(), out valuesList);
+                }
 
-            if (dictionary.TryGetValue(newName.ToUpperInvariant(), out valuesList))
-            {
-                valuesList.Add(record);
-            }
-            else
-            {
-                valuesList = new List<FileCabinetRecord>();
-                valuesList.Add(record);
-                dictionary.Add(newName.ToUpperInvariant(), valuesList);
+                if (dictionary.TryGetValue(newName.ToUpperInvariant(), out valuesList))
+                {
+                    valuesList.Add(record);
+                }
+                else
+                {
+                    valuesList = new List<FileCabinetRecord>();
+                    valuesList.Add(record);
+                    dictionary.Add(newName.ToUpperInvariant(), valuesList);
+                }
             }
         }
 
@@ -256,6 +290,42 @@ namespace FileCabinetApp
                 valuesList.Add(record);
                 dictionary.Add(name.ToUpperInvariant(), valuesList);
             }
+        }
+
+        private void AddEntryInAllContainers(FileCabinetRecord record)
+        {
+            this.list.Add(record);
+#pragma warning disable CA1062 // Validate arguments of public methods
+            AddRecordToDictionary(record.FirstName, record, this.firstNameDictionary);
+            AddRecordToDictionary(record.LastName, record, this.lastNameDictionary);
+#pragma warning restore CA1062 // Validate arguments of public methods
+            AddRecordToDictionary(record.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), record, this.dateOfBirthDictionary);
+        }
+
+        private void EditEntryInAllContainers(RecordArguments newArguments, FileCabinetRecord existingRecord)
+        {
+            string oldFirstName = existingRecord.FirstName;
+            string oldLastName = existingRecord.LastName;
+            string oldDateOfBirth = existingRecord.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo);
+            existingRecord.FirstName = newArguments.FirstName;
+            existingRecord.LastName = newArguments.LastName;
+            existingRecord.DateOfBirth = newArguments.DateOfBirth;
+            existingRecord.ZipCode = newArguments.ZipCode;
+            existingRecord.City = newArguments.City;
+            existingRecord.Street = newArguments.Street;
+            existingRecord.Salary = newArguments.Salary;
+            existingRecord.Gender = newArguments.Gender;
+
+#pragma warning disable CA1062 // Validate arguments of public methods
+            EditRecordInDictionary(oldFirstName.ToUpperInvariant(), newArguments.FirstName.ToUpperInvariant(), newArguments.Id, existingRecord, this.firstNameDictionary);
+            EditRecordInDictionary(oldLastName.ToUpperInvariant(), newArguments.LastName.ToUpperInvariant(), newArguments.Id, existingRecord, this.lastNameDictionary);
+#pragma warning restore CA1062 // Validate arguments of public methods
+            EditRecordInDictionary(oldDateOfBirth.ToUpperInvariant(), newArguments.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo).ToUpperInvariant(), newArguments.Id, existingRecord, this.dateOfBirthDictionary);
+        }
+
+        private int GetLastRecordId()
+        {
+            return this.list[this.list.Count - 1].Id;
         }
     }
 }

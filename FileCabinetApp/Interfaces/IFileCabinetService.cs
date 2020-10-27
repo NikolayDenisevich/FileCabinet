@@ -28,7 +28,7 @@ namespace FileCabinetApp
         /// Returns records collection.
         /// </summary>
         /// <returns>Readonly records collection.</returns>
-        public ReadOnlyCollection<TRecord> GetRecords();
+        public IReadOnlyCollection<TRecord> GetRecords();
 
         /// <summary>
         /// Returns records quantity.
@@ -41,20 +41,34 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="firstName">The specified firstname.</param>
         /// <returns>Records collection.</returns>
-        public ReadOnlyCollection<TRecord> FindByFirstName(string firstName);
+        public IReadOnlyCollection<TRecord> FindByFirstName(string firstName);
 
         /// <summary>
         /// Returns records collection that contains records with the specified lastName.
         /// </summary>
         /// <param name="lastName">The specified lastName.</param>
         /// <returns>Records collection.</returns>
-        public ReadOnlyCollection<TRecord> FindByLastName(string lastName);
+        public IReadOnlyCollection<TRecord> FindByLastName(string lastName);
 
         /// <summary>
         /// Returns records collection that contains records with the specified date of birth.
         /// </summary>
         /// <param name="dateOfBirth">The specified date of birth.</param>
         /// <returns>Records collection.</returns>
-        public ReadOnlyCollection<TRecord> FindByDateOfBirth(DateTime dateOfBirth);
+        public IReadOnlyCollection<TRecord> FindByDateOfBirth(DateTime dateOfBirth);
+
+        /// <summary>
+        /// Creates the FileCabinetServiceSnapshot instance.
+        /// </summary>
+        /// <param name="records">The records collection for export.</param>
+        /// <returns>The FileCabinetServiceSnapshot instance.</returns>
+        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<TRecord> records);
+
+        /// <summary>
+        /// Restrores all the containers after import from file.
+        /// </summary>
+        /// <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
+        /// <returns>Restored records count.</returns>
+        public int Restore(FileCabinetServiceSnapshot snapshot);
     }
 }
