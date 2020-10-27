@@ -256,8 +256,8 @@ namespace FileCabinetApp
         private static ICommandHandler CreateCommandHandlers()
         {
             IRecordPrinter<FileCabinetRecord> recordPrinter = new DefaultRecordPrinter();
+            var insertHandler = new InsertCommandHandler(fileCabinetService, inputValidator);
             var createHandler = new CreateCommandHandler(fileCabinetService, inputValidator);
-            var editHandler = new EditCommandHandler(fileCabinetService, inputValidator);
             var exitHandler = new ExitCommandHandler(r => isRunning = r);
             var exportHandler = new ExportCommandHandler(fileCabinetService);
             var findHandler = new FindCommandHandler(fileCabinetService, DefaultRecordPrint, inputValidator);
@@ -265,11 +265,12 @@ namespace FileCabinetApp
             var importHandler = new ImportCommandHandler(fileCabinetService);
             var listHandler = new ListCommandHandler(fileCabinetService, DefaultRecordPrint);
             var purgeHandler = new PurgeCommandHandler(fileCabinetService);
-            var removeHandler = new RemoveCommandHandler(fileCabinetService);
             var statHandler = new StatCommandHandler(fileCabinetService);
+            var deleteHandler = new DeleteCommandHandler(fileCabinetService, inputValidator);
+            var updateHandler = new UpdateCommandHandler(fileCabinetService, inputValidator);
 
-            createHandler
-                .SetNext(editHandler)
+            insertHandler
+                .SetNext(createHandler)
                 .SetNext(exitHandler)
                 .SetNext(exportHandler)
                 .SetNext(findHandler)
@@ -277,10 +278,11 @@ namespace FileCabinetApp
                 .SetNext(importHandler)
                 .SetNext(listHandler)
                 .SetNext(purgeHandler)
-                .SetNext(removeHandler)
-                .SetNext(statHandler);
+                .SetNext(statHandler)
+                .SetNext(deleteHandler)
+                .SetNext(updateHandler);
 
-            return createHandler;
+            return insertHandler;
         }
 
         private static void DefaultRecordPrint(IEnumerable<FileCabinetRecord> records)

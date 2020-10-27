@@ -45,7 +45,7 @@ namespace FileCabinetApp.CommandHandlers
         {
             if (commandRequest.Command.Equals(FindCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                ParceParameters(properties, commandRequest.Parameters);
+                ParceParameters(properties, commandRequest.Parameters, ' ');
             }
             else
             {

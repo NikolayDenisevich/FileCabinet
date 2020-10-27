@@ -101,5 +101,17 @@ namespace FileCabinetApp
             string message = $"Zip code range is {this.container.ZipCodeValidator.Min}..{this.container.ZipCodeValidator.Max}";
             return new Tuple<bool, string>(isValid, message);
         }
+
+        /// <summary>
+        /// Validates int input.
+        /// </summary>
+        /// <param name="input">Input int number.</param>
+        /// <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        internal Tuple<bool, string> ValidateInt(int input)
+        {
+            bool isValid = input > 0;
+            string message = $"ID should be more than zero";
+            return new Tuple<bool, string>(isValid, message);
+        }
     }
 }
