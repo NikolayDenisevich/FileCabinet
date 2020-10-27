@@ -20,9 +20,31 @@ namespace FileCabinetApp
         /// Initializes a new instance of the <see cref="FileCabinetService"/> class.
         /// </summary>
         /// <param name="validator">The arguments record validator.</param>
+        /// <exception cref="ArgumentNullException">Thrown when validator is null.</exception>
         public FileCabinetService(IRecordValidator<RecordArguments> validator)
         {
+            if (validator is null)
+            {
+                throw new ArgumentNullException($"{nameof(validator)} is null");
+            }
+
             this.validator = validator;
+        }
+
+        /// <summary>
+        /// Creates the FileCabinetServiceSnapshot instance.
+        /// </summary>
+        /// <param name="records">The records collection for export.</param>
+        /// <returns>The FileCabinetServiceSnapshot instance.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
+        public static FileCabinetServiceSnapshot MakeSnapshot(ReadOnlyCollection<FileCabinetRecord> records)
+        {
+            if (records is null)
+            {
+                throw new ArgumentNullException($"{nameof(records)} is null");
+            }
+
+            return new FileCabinetServiceSnapshot(records);
         }
 
         /// <summary>

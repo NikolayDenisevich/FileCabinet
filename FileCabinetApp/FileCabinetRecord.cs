@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace FileCabinetApp
 {
@@ -78,5 +79,12 @@ namespace FileCabinetApp
         /// The Gender value of this instance.
         /// </value>
         public char Gender { get; set; }
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            return $"{this.Id}, {this.FirstName}, {this.LastName}, {this.DateOfBirth.ToString("dd/mm/yyyy", DateTimeFormatInfo.InvariantInfo)}," +
+                $"{this.ZipCode}, {this.City}, {this.Street}, {this.Salary}, {this.Gender}";
+        }
     }
 }

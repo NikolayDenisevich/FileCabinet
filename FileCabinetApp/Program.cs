@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.IO;
+using System.Text;
 
 namespace FileCabinetApp
 {
@@ -14,6 +16,7 @@ namespace FileCabinetApp
         private const int CommandHelpIndex = 0;
         private const int DescriptionHelpIndex = 1;
         private const int ExplanationHelpIndex = 2;
+        private const string DefaultRootDirectory = @"C:\Cabinet";
 
         private static bool isRunning = true;
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService;
@@ -29,6 +32,7 @@ namespace FileCabinetApp
             new Tuple<string, Action<string>>("list", List),
             new Tuple<string, Action<string>>("edit", Edit),
             new Tuple<string, Action<string>>("find", Find),
+            new Tuple<string, Action<string>>("export", Export),
         };
 
         private static Tuple<string, string, Action<string, string>>[] properties = new Tuple<string, string, Action<string, string>>[]
@@ -36,6 +40,8 @@ namespace FileCabinetApp
             new Tuple<string, string, Action<string, string>>("firstname", "First Name", ShowByFirstName),
             new Tuple<string, string, Action<string, string>>("lastname", "Last Name", ShowByLastName),
             new Tuple<string, string, Action<string, string>>("dateofbirth", "Date of birth", ShowByDate),
+            new Tuple<string, string, Action<string, string>>("csv", "csv export", ExportToCsv),
+            new Tuple<string, string, Action<string, string>>("xml", "xml export", ExportToXml),
         };
 
         private static string[][] helpMessages = new string[][]
@@ -47,6 +53,7 @@ namespace FileCabinetApp
             new string[] { "list", "displays a list of records added to the service.", "The 'list' displays a list of records added to the service." },
             new string[] { "edit", "edits an existing record.", "The 'edit 1' edits an existing record #1." },
             new string[] { "find", "finds records with a scpecified properties: 'firstname', 'lastname' or 'dateofbirth'.", "The 'find firstname Petr' serches all records with firstname Petr." },
+            new string[] { "export", "exports records to scpecified file: 'csv', 'xml'.", "The 'export csv filename.csv' export all records to 'filename.csv' file." },
         };
 
         /// <summary>
@@ -213,7 +220,12 @@ namespace FileCabinetApp
 
         private static void Find(string parameters)
         {
-            var inputs = parameters.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            ParametersParser(parameters);
+        }
+
+        private static void ParametersParser(string parameters)
+        {
+            var inputs = parameters.Split(' ', 2);
             const int propertyIndex = 0;
             string property = inputs[propertyIndex];
 
@@ -233,6 +245,156 @@ namespace FileCabinetApp
             else
             {
                 PrintMissedPropertyInfo(property);
+            }
+        }
+
+        private static void Export(string parameters)
+        {
+            ParametersParser(parameters);
+        }
+
+        private static void ExportToXml(string propertyFullName, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                Console.WriteLine($"'{propertyFullName}' value is empty.");
+                return;
+            }
+
+            string filePath = value.Trim();
+            string directoryPath = Path.GetDirectoryName(filePath);
+            bool isRewriteTrue;
+            if (!Path.IsPathRooted(filePath))
+            {
+                filePath = Path.Combine(DefaultRootDirectory, filePath);
+                if (File.Exists(filePath))
+                {
+                    isRewriteTrue = ReadInputForRewrite(filePath);
+                    if (!isRewriteTrue)
+                    {
+                        return;
+                    }
+                }
+
+                SaveToXml(filePath);
+            }
+            else if (Directory.Exists(directoryPath))
+            {
+                if (File.Exists(filePath))
+                {
+                    isRewriteTrue = ReadInputForRewrite(filePath);
+                    if (!isRewriteTrue)
+                    {
+                        return;
+                    }
+                }
+
+                SaveToXml(filePath);
+            }
+            else
+            {
+                Console.WriteLine($"Export failed: can't open file {filePath}.");
+            }
+        }
+
+        private static void SaveToXml(string filePath)
+        {
+            FileCabinetService servise = fileCabinetService as FileCabinetService;
+            var records = servise.GetRecords();
+            FileCabinetServiceSnapshot snapshot = FileCabinetService.MakeSnapshot(records);
+            using (var streamWriter = new StreamWriter(filePath, false, Encoding.UTF8))
+            {
+                snapshot.SaveToXml(streamWriter);
+                Console.WriteLine($"All records are exported to file {filePath}.");
+            }
+        }
+
+        private static void ExportToCsv(string propertyFullName, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                Console.WriteLine($"'{propertyFullName}' value is empty.");
+                return;
+            }
+
+            string filePath = value.Trim();
+            string directoryPath = Path.GetDirectoryName(filePath);
+            bool isRewriteTrue;
+            if (!Path.IsPathRooted(filePath))
+            {
+                filePath = Path.Combine(DefaultRootDirectory, filePath);
+                if (File.Exists(filePath))
+                {
+                    isRewriteTrue = ReadInputForRewrite(filePath);
+                    if (!isRewriteTrue)
+                    {
+                        return;
+                    }
+                }
+
+                SaveToCsv(filePath);
+            }
+            else if (Directory.Exists(directoryPath))
+            {
+                if (File.Exists(filePath))
+                {
+                    isRewriteTrue = ReadInputForRewrite(filePath);
+                    if (!isRewriteTrue)
+                    {
+                        return;
+                    }
+                }
+
+                SaveToCsv(filePath);
+            }
+            else
+            {
+                Console.WriteLine($"Export failed: can't open file {filePath}.");
+            }
+        }
+
+        private static bool ReadInputForRewrite(string filePath)
+        {
+            Console.Write($"File is exist - rewrite {filePath}? [Y/n] : ");
+            bool isCorrect = false;
+            bool isRewriteTrue = true;
+            while (!isCorrect)
+            {
+                string input = Console.ReadLine().ToUpperInvariant();
+                switch (input)
+                {
+                    case "Y":
+                        {
+                            isCorrect = true;
+                            isRewriteTrue = true;
+                            break;
+                        }
+
+                    case "N":
+                        {
+                            isCorrect = true;
+                            isRewriteTrue = false;
+                            break;
+                        }
+
+                    default:
+                        Console.Write("Enter [y/n]");
+                        break;
+                }
+            }
+
+            return isRewriteTrue;
+        }
+
+        private static void SaveToCsv(string filePath)
+        {
+            FileCabinetService servise = fileCabinetService as FileCabinetService;
+            var records = servise.GetRecords();
+            FileCabinetServiceSnapshot snapshot = FileCabinetService.MakeSnapshot(records);
+            using (var streamWriter = new StreamWriter(filePath, false, Encoding.UTF8))
+            {
+                snapshot.SaveToCsv(streamWriter);
+                Console.WriteLine($"All records are exported to file {filePath}.");
             }
         }
 
