@@ -10,8 +10,10 @@ namespace FileCabinetApp.CommandHandlers
     internal class InsertCommandHandler : ServiceCommandHandlerBase
     {
         private const string InsertCommand = "insert";
-        private const string ValuesLiteral = "values";
+        private const string ValuesLiteral = " values ";
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> service;
+        private static InputValidator inputValidator;
+        private static Dictionary<string, string> selectorsDictionary;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InsertCommandHandler"/> class.
@@ -20,7 +22,7 @@ namespace FileCabinetApp.CommandHandlers
         /// <param name="validator">InputValidator instance.</param>
         public InsertCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService, InputValidator validator)
         {
-            InputValidator = validator;
+            inputValidator = validator;
             service = fileCabinetService;
         }
 
@@ -44,7 +46,7 @@ namespace FileCabinetApp.CommandHandlers
         {
             if (!input.StartsWith('(') || !input.EndsWith(')'))
             {
-                PrintIncorrectSyntax(input);
+                Print.IncorrectSyntax(input);
                 return false;
             }
 
@@ -53,7 +55,9 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void Insert(string parameters)
         {
-            BreakLastKeyValuePairsState(PropertiesNameValuePairs);
+            selectorsDictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            InitializeDictionaryByPropertiesNames(selectorsDictionary);
+            Parser.SetValueToAllDictionaryEntries<FileCabinetRecord>(selectorsDictionary, null);
             bool result = TryFillPropertyPairs(parameters);
             if (!result)
             {
@@ -61,14 +65,13 @@ namespace FileCabinetApp.CommandHandlers
             }
 
             RecordArguments arguments = new RecordArguments();
-            result = result && TryToUpdateArguments(arguments, PropertiesNameValuePairs);
+            result = result && Input.TryToUpdateArgumentsWithId(arguments, selectorsDictionary, inputValidator);
             if (!result)
             {
                 return;
             }
 
-            FileCabinetRecord record = service.GetRecords().FirstOrDefault(r => r.Id == arguments.Id);
-
+            FileCabinetRecord record = service.GetRecords(string.Empty, r => r.Id == arguments.Id).FirstOrDefault();
             if (record is null)
             {
                 int id = service.CreateRecord(arguments);
@@ -87,7 +90,7 @@ namespace FileCabinetApp.CommandHandlers
             bool isValid = parameters.Contains(ValuesLiteral, StringComparison.InvariantCultureIgnoreCase);
             if (!isValid)
             {
-                PrintIncorrectSyntax(parameters);
+                Print.IncorrectSyntax(parameters);
                 return false;
             }
 
@@ -95,7 +98,7 @@ namespace FileCabinetApp.CommandHandlers
             isValid = namesValuesPairs.Length > 1;
             if (!isValid)
             {
-                PrintIncorrectSyntax(parameters);
+                Print.IncorrectSyntax(parameters);
                 return false;
             }
 
@@ -120,10 +123,13 @@ namespace FileCabinetApp.CommandHandlers
 
         private static bool TryFillPropetyPairs(string parametersNames, string parametersValues)
         {
-            string[] names = parametersNames.Split(',');
-            string[] values = parametersValues.Split(',');
-            if (names.Length != values.Length)
+            const char PropertiesSeparator = ',';
+            int validPropertiesCount = typeof(FileCabinetRecord).GetProperties().Length;
+            string[] names = parametersNames.Split(PropertiesSeparator, StringSplitOptions.RemoveEmptyEntries);
+            string[] values = parametersValues.Split(PropertiesSeparator, StringSplitOptions.RemoveEmptyEntries);
+            if (names.Length != values.Length || names.Length != validPropertiesCount || values.Length != validPropertiesCount)
             {
+                Print.MismatchOfParametersAndValues(parametersNames, parametersValues);
                 return false;
             }
 
@@ -131,22 +137,22 @@ namespace FileCabinetApp.CommandHandlers
             for (int i = 0; i < names.Length; i++)
             {
                 names[i] = names[i].Trim();
-                bool isCorrectName = PropertiesNameValuePairs.ContainsKey(names[i]);
-                bool isKvpValueNull = isCorrectName && PropertiesNameValuePairs[names[i]] is null;
+                bool isCorrectName = selectorsDictionary.ContainsKey(names[i]);
+                bool isKvpValueNull = isCorrectName && selectorsDictionary[names[i]] is null;
                 result &= isCorrectName && isKvpValueNull;
                 if (result)
                 {
-                    PropertiesNameValuePairs[names[i]] = values[i].Trim().Trim('\'');
+                    selectorsDictionary[names[i]] = values[i].Trim().Trim('\'');
                 }
                 else
                 {
                     if (!isCorrectName)
                     {
-                        PrintIncorrectSyntax(parametersNames, names[i]);
+                        Print.IncorrectSyntax(parametersNames, names[i]);
                     }
                     else if (!isKvpValueNull)
                     {
-                        PrintIncorrectSyntax(parametersValues, values[i]);
+                        Print.RepeatedProperty(names[i]);
                     }
 
                     break;

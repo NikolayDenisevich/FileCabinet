@@ -21,7 +21,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when fileCabinetService is null.</exception>
         public ServiceMeter(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService)
         {
-            this.fileCabinetService = fileCabinetService ?? throw new ArgumentNullException($"{nameof(fileCabinetService)} is null");
+            this.fileCabinetService = fileCabinetService ?? throw new ArgumentNullException($"{nameof(fileCabinetService)}");
             this.timer = new Stopwatch();
         }
 
@@ -33,7 +33,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
         public int CreateRecord(RecordArguments arguments)
         {
-            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             this.timer.Start();
             int result = this.fileCabinetService.CreateRecord(arguments);
             this.timer.Stop();
@@ -55,59 +55,15 @@ namespace FileCabinetApp
         }
 
         /// <summary>
-        /// Returns a sequence of records containing the date 'dateOfBirth'. Shows elapsed execution time.
+        /// Returns records collection.
         /// </summary>
-        /// <param name="dateOfBirth">Search key.</param>
-        /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
-        public IEnumerable<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
+        /// <param name="filters">Filters string representation.</param>
+        /// <param name="predicate">Filtering condition.</param>
+        /// <returns>Readonly records collection.</returns>
+        public IEnumerable<FileCabinetRecord> GetRecords(string filters, Func<FileCabinetRecord, bool> predicate)
         {
             this.timer.Start();
-            var result = this.fileCabinetService.FindByDateOfBirth(dateOfBirth);
-            this.timer.Stop();
-            this.ShowElapsedTime("FindByDateOfBirth");
-            return result;
-        }
-
-        /// <summary>
-        /// Returns a sequence of records containing the name 'firstname'. Shows elapsed execution time.
-        /// </summary>
-        /// <param name="firstName">Search key.</param>
-        /// <returns>A sequence of records containing the name 'firstname'.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
-        public IEnumerable<FileCabinetRecord> FindByFirstName(string firstName)
-        {
-            firstName = firstName ?? throw new ArgumentNullException($"{nameof(firstName)} is null");
-            this.timer.Start();
-            var result = this.fileCabinetService.FindByFirstName(firstName);
-            this.timer.Stop();
-            this.ShowElapsedTime("FindByFirstName");
-            return result;
-        }
-
-        /// <summary>
-        /// Returns a sequence of records containing the name 'firstname'.Shows elapsed execution time.
-        /// </summary>
-        /// <param name="lastName">Search key.</param>
-        /// <returns>A sequence of records containing the name 'lastName'.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
-        public IEnumerable<FileCabinetRecord> FindByLastName(string lastName)
-        {
-            lastName = lastName ?? throw new ArgumentNullException($"{nameof(lastName)} is null");
-            this.timer.Start();
-            var result = this.fileCabinetService.FindByLastName(lastName);
-            this.timer.Stop();
-            this.ShowElapsedTime("FindByLastName");
-            return result;
-        }
-
-        /// <summary>
-        /// Returns the collection of all records. Shows elapsed execution time.
-        /// </summary>
-        /// <returns>The collection of all records.</returns>
-        public IReadOnlyCollection<FileCabinetRecord> GetRecords()
-        {
-            this.timer.Start();
-            var result = this.fileCabinetService.GetRecords();
+            var result = this.fileCabinetService.GetRecords(filters, predicate);
             this.timer.Stop();
             this.ShowElapsedTime("GetRecords");
             return result;
@@ -132,9 +88,9 @@ namespace FileCabinetApp
         /// <param name="records">The records collection for export.</param>
         /// <returns>The FileCabinetServiceSnapshot instance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
+        public FileCabinetServiceSnapshot MakeSnapshot(IEnumerable<FileCabinetRecord> records)
         {
-            records = records ?? throw new ArgumentNullException($"{nameof(records)} is null");
+            records = records ?? throw new ArgumentNullException($"{nameof(records)}");
             this.timer.Start();
             var result = this.fileCabinetService.MakeSnapshot(records);
             this.timer.Stop();
@@ -175,7 +131,7 @@ namespace FileCabinetApp
         /// <returns>Restored records count.</returns>
         public int Restore(FileCabinetServiceSnapshot snapshot)
         {
-            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)} is null");
+            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)}");
             this.timer.Start();
             var result = this.fileCabinetService.Restore(snapshot);
             this.timer.Stop();

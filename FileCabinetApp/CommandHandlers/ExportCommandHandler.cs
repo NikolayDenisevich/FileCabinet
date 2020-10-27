@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace FileCabinetApp.CommandHandlers
@@ -38,7 +40,7 @@ namespace FileCabinetApp.CommandHandlers
         {
             if (commandRequest.Command.Equals(ExportCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                ParceParameters(properties, commandRequest.Parameters, ' ');
+                Parser.ParceParameters(properties, commandRequest.Parameters, ' ');
             }
             else
             {
@@ -131,7 +133,7 @@ namespace FileCabinetApp.CommandHandlers
 
         private static void SaveToFile(string filePath, string propertyName)
         {
-            var records = service.GetRecords();
+            var records = new ReadOnlyCollection<FileCabinetRecord>(service.GetRecords(null, null).ToList());
             FileCabinetServiceSnapshot snapshot = service.MakeSnapshot(records);
             using (var streamWriter = new StreamWriter(filePath, false, Encoding.Unicode))
             {

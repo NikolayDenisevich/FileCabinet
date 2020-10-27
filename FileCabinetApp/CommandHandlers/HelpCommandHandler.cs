@@ -36,7 +36,8 @@ namespace FileCabinetApp.CommandHandlers
                              "adds new record with Id=1, firstname 'John', lastname 'Doe', date of birth 18/05/1986 etc...",
                          },
             new string[] { "delete", "deletes records using specified criteria", "The 'delete where id = '1' deletes record #1." },
-            new string[] { "update", "updates records using specified criteria", "Using expmle: 'update set firstname = 'John', lastname = 'Doe' , dateofbirth = '18/05/1986' where id = '1'" },
+            new string[] { "update", "updates records using specified criteria", "Using exapmle: 'update set firstname = 'John', lastname = 'Doe' , dateofbirth = '18/05/1986' where id = '1'" },
+            new string[] { "select", "selects records using specified criteria", "Using exapmle: 'select id, firstname, lastname where firstname = 'John' and lastname = 'Doe'" },
         };
 
         /// <summary>

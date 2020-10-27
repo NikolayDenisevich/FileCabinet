@@ -12,12 +12,9 @@ namespace FileCabinetApp
     /// </summary>
     public sealed class ServiceLogger : IFileCabinetService<FileCabinetRecord, RecordArguments>, IDisposable
     {
-        private const string DefaultFileName = "log.txt"; // TODO : add config.
+        private const string DefaultFileName = "log.txt";
         private const string CreateRecordName = "CreateRecord";
         private const string EditRecordName = "EditRecord";
-        private const string FindByDateOfBirthName = "FindByDateOfBirth";
-        private const string FindByFirstNameName = "FindByFirstName";
-        private const string FindByLastNameName = "FindByLastName";
         private const string GetRecordsName = "GetRecords";
         private const string GetStatName = "GetStat";
         private const string MakeSnapshotName = "MakeSnapshot";
@@ -73,56 +70,15 @@ namespace FileCabinetApp
         }
 
         /// <summary>
-        /// Returns a sequence of records containing the date 'dateOfBirth'. Writes in file method calling parameters.
+        /// Returns records collection.
         /// </summary>
-        /// <param name="dateOfBirth">Search key.</param>
-        /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
-        public IEnumerable<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
-        {
-            this.LogMethodCall(dateOfBirth.ToString(dateTimeFormat, invatiantCulture), nameof(dateOfBirth), FindByDateOfBirthName);
-            var result = this.fileCabinetService.FindByDateOfBirth(dateOfBirth);
-            this.LogMethodResult(FindByDateOfBirthName, result.ToString());
-            return result;
-        }
-
-        /// <summary>
-        /// Returns a sequence of records containing the name 'firstname'. Writes in file method calling parameters.
-        /// </summary>
-        /// <param name="firstName">Search key.</param>
-        /// <returns>A sequence of records containing the name 'firstname'.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
-        public IEnumerable<FileCabinetRecord> FindByFirstName(string firstName)
-        {
-            firstName = firstName ?? throw new ArgumentNullException($"{nameof(firstName)} is null");
-            this.LogMethodCall(firstName, nameof(firstName), FindByFirstNameName);
-            var result = this.fileCabinetService.FindByFirstName(firstName);
-            this.LogMethodResult(FindByFirstNameName, result.ToString());
-            return result;
-        }
-
-        /// <summary>
-        /// Returns a sequence of records containing the name 'firstname'.Writes in file method calling parameters.
-        /// </summary>
-        /// <param name="lastName">Search key.</param>
-        /// <returns>A sequence of records containing the name 'lastName'.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
-        public IEnumerable<FileCabinetRecord> FindByLastName(string lastName)
-        {
-            lastName = lastName ?? throw new ArgumentNullException($"{nameof(lastName)} is null");
-            this.LogMethodCall(lastName, nameof(lastName), FindByLastNameName);
-            var result = this.fileCabinetService.FindByLastName(lastName);
-            this.LogMethodResult(FindByLastNameName, result.ToString());
-            return result;
-        }
-
-        /// <summary>
-        /// Returns the collection of all records. Writes in file method calling parameters.
-        /// </summary>
-        /// <returns>The collection of all records.</returns>
-        public IReadOnlyCollection<FileCabinetRecord> GetRecords()
+        /// <param name="filters">Filters string representation.</param>
+        /// <param name="predicate">Filtering condition.</param>
+        /// <returns>Readonly records collection.</returns>
+        public IEnumerable<FileCabinetRecord> GetRecords(string filters, Func<FileCabinetRecord, bool> predicate)
         {
             this.LogMethodCall(GetRecordsName);
-            var result = this.fileCabinetService.GetRecords();
+            var result = this.fileCabinetService.GetRecords(filters, predicate);
             this.LogMethodResult(GetRecordsName, result.ToString());
             return result;
         }
@@ -145,9 +101,9 @@ namespace FileCabinetApp
         /// <param name="records">The records collection for export.</param>
         /// <returns>The FileCabinetServiceSnapshot instance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
+        public FileCabinetServiceSnapshot MakeSnapshot(IEnumerable<FileCabinetRecord> records)
         {
-            records = records ?? throw new ArgumentNullException($"{nameof(records)} is null");
+            records = records ?? throw new ArgumentNullException($"{nameof(records)}");
             this.LogMethodCall(records.ToString(), nameof(records), MakeSnapshotName);
             var result = this.fileCabinetService.MakeSnapshot(records);
             this.LogMethodResult(MakeSnapshotName, result.ToString());

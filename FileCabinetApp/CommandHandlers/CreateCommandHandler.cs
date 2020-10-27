@@ -9,6 +9,7 @@ namespace FileCabinetApp.CommandHandlers
     {
         private const string CreateCommand = "create";
         private readonly IFileCabinetService<FileCabinetRecord, RecordArguments> service;
+        private readonly InputValidator inputValidator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CreateCommandHandler"/> class.
@@ -17,7 +18,7 @@ namespace FileCabinetApp.CommandHandlers
         /// <param name="validator">InputValidator instance.</param>
         public CreateCommandHandler(IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService, InputValidator validator)
         {
-            InputValidator = validator;
+            this.inputValidator = validator;
             this.service = fileCabinetService;
         }
 
@@ -31,11 +32,11 @@ namespace FileCabinetApp.CommandHandlers
             {
                 if (!string.IsNullOrEmpty(commandRequest.Parameters))
                 {
-                    Console.WriteLine("Please, use 'create' command without any parameters.");
+                    Print.UseCommandWithoutParameters(CreateCommand);
                 }
                 else
                 {
-                    RecordArguments arguments = ReadArguments();
+                    RecordArguments arguments = Input.ReadArguments(this.inputValidator);
                     int id = this.service.CreateRecord(arguments);
                     Console.WriteLine($"Record #{id} is created");
                 }

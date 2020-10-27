@@ -39,7 +39,7 @@ namespace FileCabinetApp.CommandHandlers
         {
             if (commandRequest.Command.Equals(ImportCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                ParceParameters(properties, commandRequest.Parameters, ' ');
+                Parser.ParceParameters(properties, commandRequest.Parameters, ' ');
             }
             else
             {
@@ -92,7 +92,7 @@ namespace FileCabinetApp.CommandHandlers
             bool isValid = true;
             if (string.IsNullOrEmpty(value))
             {
-                PrintParametrizedCommandHint();
+                Print.ParametrizedCommandHint();
                 isValid = false;
             }
             else

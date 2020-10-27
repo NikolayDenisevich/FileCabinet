@@ -19,7 +19,7 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="records">The FileCabinetRecords collection.</param>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public FileCabinetServiceSnapshot(IReadOnlyCollection<FileCabinetRecord> records) =>
+        public FileCabinetServiceSnapshot(IEnumerable<FileCabinetRecord> records) =>
             this.records = records != null ? new List<FileCabinetRecord>(records) : throw new ArgumentNullException($"{nameof(records)} is null");
 
         /// <summary>

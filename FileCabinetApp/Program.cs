@@ -138,12 +138,12 @@ namespace FileCabinetApp
             else if (args[nextIndex].Equals(StopWatch, StringComparison.InvariantCultureIgnoreCase))
             {
                 nextService = new ServiceMeter(service);
-                Console.WriteLine("StopWatch activated.");
+                Print.StopWathActivated();
             }
             else if (args[nextIndex].Equals(Logger, StringComparison.InvariantCultureIgnoreCase))
             {
                 nextService = new ServiceLogger(new ServiceMeter(service));
-                Console.WriteLine("Logging activated.");
+                Print.LoggingActivated();
             }
             else
             {
@@ -160,8 +160,7 @@ namespace FileCabinetApp
             string result;
             if (index > args.Length - 1)
             {
-                Console.WriteLine("<-v> parameter value is wrong or empty. Use <-v custom> or <--validation-rules=custom> " +
-                    "if you want to use custom validation rules (custom validation rules are for memory storage only.).");
+                Print.ValidationRulesUsageHint();
                 result = DefaultServerValidationType;
             }
             else if (args[index].Equals(DefaultServerValidationType, StringComparison.InvariantCultureIgnoreCase))
@@ -174,8 +173,7 @@ namespace FileCabinetApp
             }
             else
             {
-                Console.WriteLine("<-v> parameter value is wrong or empty. Use <-v custom> or <--validation-rules=custom> " +
-                    "if you want to use custom validation rules (custom validation rules are for memory storage only.).");
+                Print.ValidationRulesUsageHint();
                 result = DefaultServerValidationType;
             }
 
@@ -189,7 +187,7 @@ namespace FileCabinetApp
             const string FilesystemStorage = "FILE";
             if (index > args.Length - 1)
             {
-                Console.WriteLine("<-s> parameter value is wrong or empty. Use <-s file> or <--storage=file> if you want to use filesystem storage.");
+                Print.StorageUsageHint();
                 service = CreateFileCabinetMemoryServiceInstance(serverValidationType);
             }
             else if (args[1].Equals(MemoryStorage, StringComparison.InvariantCultureIgnoreCase))
@@ -202,7 +200,7 @@ namespace FileCabinetApp
             }
             else
             {
-                Console.WriteLine("<-s> parameter value is wrong or empty. Use <-s file> or <--storage=file> if you want to use filesystem storage.");
+                Print.StorageUsageHint();
                 service = CreateFileCabinetMemoryServiceInstance(serverValidationType);
             }
 
@@ -212,8 +210,9 @@ namespace FileCabinetApp
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> CreateFileCabinetFileSystemServiceInstance()
         {
             const string serverValidationType = "default";
-            Console.WriteLine($"Using {serverValidationType} validation rules.");
-            Console.WriteLine("Using filesystem storage.");
+            const string storageType = "filesystem";
+            Print.UsingServerValidationRules(serverValidationType);
+            Print.UsingStorageType(storageType);
             InitializeValidators(serverValidationType);
             string fullPath = Path.Combine(DefaultRootDirectory, DefaultBinaryFileName);
             FileStream fileStream = File.Open(fullPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
@@ -239,8 +238,9 @@ namespace FileCabinetApp
 
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> CreateFileCabinetMemoryServiceInstance(string serverValidationType)
         {
-            Console.WriteLine($"Using {serverValidationType} validation rules.");
-            Console.WriteLine("Using memory storage.");
+            const string storageType = "memory";
+            Print.UsingServerValidationRules(serverValidationType);
+            Print.UsingStorageType(storageType);
             InitializeValidators(serverValidationType);
             return new FileCabinetMemoryService(recordValidator);
         }
@@ -251,6 +251,7 @@ namespace FileCabinetApp
             var validationRules = new ValidationRulesContainer(defaultSection);
             recordValidator = new ValidatorBuilder().CreateValidator(validationRules);
             inputValidator = new InputValidator(validationRules);
+            Parser.InputValidator = inputValidator;
         }
 
         private static ICommandHandler CreateCommandHandlers()
@@ -260,42 +261,27 @@ namespace FileCabinetApp
             var createHandler = new CreateCommandHandler(fileCabinetService, inputValidator);
             var exitHandler = new ExitCommandHandler(r => isRunning = r);
             var exportHandler = new ExportCommandHandler(fileCabinetService);
-            var findHandler = new FindCommandHandler(fileCabinetService, DefaultRecordPrint, inputValidator);
             var helpHandler = new HelpCommandHandler();
             var importHandler = new ImportCommandHandler(fileCabinetService);
-            var listHandler = new ListCommandHandler(fileCabinetService, DefaultRecordPrint);
             var purgeHandler = new PurgeCommandHandler(fileCabinetService);
             var statHandler = new StatCommandHandler(fileCabinetService);
-            var deleteHandler = new DeleteCommandHandler(fileCabinetService, inputValidator);
+            var deleteHandler = new DeleteCommandHandler(fileCabinetService);
             var updateHandler = new UpdateCommandHandler(fileCabinetService, inputValidator);
+            var selectHandler = new SelectCommandHandler(fileCabinetService);
 
             insertHandler
                 .SetNext(createHandler)
                 .SetNext(exitHandler)
                 .SetNext(exportHandler)
-                .SetNext(findHandler)
                 .SetNext(helpHandler)
                 .SetNext(importHandler)
-                .SetNext(listHandler)
                 .SetNext(purgeHandler)
                 .SetNext(statHandler)
                 .SetNext(deleteHandler)
-                .SetNext(updateHandler);
+                .SetNext(updateHandler)
+                .SetNext(selectHandler);
 
             return insertHandler;
-        }
-
-        private static void DefaultRecordPrint(IEnumerable<FileCabinetRecord> records)
-        {
-            if (records is null)
-            {
-                throw new ArgumentNullException($"{nameof(records)} is null.");
-            }
-
-            foreach (var item in records)
-            {
-                Console.WriteLine(item);
-            }
         }
     }
 }

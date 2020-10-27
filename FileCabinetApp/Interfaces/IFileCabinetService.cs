@@ -26,8 +26,10 @@ namespace FileCabinetApp
         /// <summary>
         /// Returns records collection.
         /// </summary>
+        /// <param name="filters">Filters string representation.</param>
+        /// <param name="predicate">Filtering condition.</param>
         /// <returns>Readonly records collection.</returns>
-        public IReadOnlyCollection<TRecord> GetRecords();
+        public IEnumerable<TRecord> GetRecords(string filters, Func<TRecord, bool> predicate);
 
         /// <summary>
         /// Returns records quantity.
@@ -36,32 +38,11 @@ namespace FileCabinetApp
         public (int, int) GetStat();
 
         /// <summary>
-        /// Returns records collection that contains records with the specified firstname.
-        /// </summary>
-        /// <param name="firstName">The specified firstname.</param>
-        /// <returns>Records collection.</returns>
-        public IEnumerable<TRecord> FindByFirstName(string firstName);
-
-        /// <summary>
-        /// Returns records collection that contains records with the specified lastName.
-        /// </summary>
-        /// <param name="lastName">The specified lastName.</param>
-        /// <returns>Records collection.</returns>
-        public IEnumerable<TRecord> FindByLastName(string lastName);
-
-        /// <summary>
-        /// Returns records collection that contains records with the specified date of birth.
-        /// </summary>
-        /// <param name="dateOfBirth">The specified date of birth.</param>
-        /// <returns>Records collection.</returns>
-        public IEnumerable<TRecord> FindByDateOfBirth(DateTime dateOfBirth);
-
-        /// <summary>
         /// Creates the FileCabinetServiceSnapshot instance.
         /// </summary>
         /// <param name="records">The records collection for export.</param>
         /// <returns>The FileCabinetServiceSnapshot instance.</returns>
-        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<TRecord> records);
+        public FileCabinetServiceSnapshot MakeSnapshot(IEnumerable<TRecord> records);
 
         /// <summary>
         /// Restrores all the containers after import from file.

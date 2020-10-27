@@ -11,7 +11,7 @@ namespace FileCabinetApp.CommandHandlers
     /// </summary>
     internal class CommandHandlerBase : ICommandHandler
     {
-        private static string[] commands = new string[] { "help", "exit", "stat", "create", "list", "find", "export", "import", "purge", "insert", "delete", "update" };
+        private static readonly string[] Commands = new string[] { "help", "exit", "stat", "create", "export", "import", "purge", "insert", "delete", "update", "select" };
 
         private ICommandHandler nextHandler;
 
@@ -41,61 +41,28 @@ namespace FileCabinetApp.CommandHandlers
                 var similarCommands = this.FindSimilarCommands(commandRequest.Command);
                 if (!similarCommands.Any())
                 {
-                    PrintMissedCommandInfo(commandRequest.Command);
+                    Print.MissedCommandInfo(commandRequest.Command);
                 }
                 else
                 {
-                    PrintMostSimilarCommands(similarCommands);
+                    Print.MostSimilarCommands(similarCommands);
                 }
             }
-        }
-
-        private static void PrintMissedCommandInfo(string command)
-        {
-            Console.WriteLine($"There is no '{command}' command.");
-            Console.WriteLine();
-        }
-
-        private static void PrintMostSimilarCommands(IEnumerable<string> commands)
-        {
-            var enumerator = commands.GetEnumerator();
-            enumerator.MoveNext();
-            var command = enumerator.Current;
-            if (!enumerator.MoveNext())
-            {
-                PrintMostSimilarCommands(command);
-                return;
-            }
-
-            var builder = new StringBuilder();
-            builder.AppendLine("The most similar commands are:");
-            foreach (var item in commands)
-            {
-                builder.AppendLine($"\t{item}");
-            }
-
-            Console.WriteLine(builder);
-        }
-
-        private static void PrintMostSimilarCommands(string command)
-        {
-            Console.WriteLine($"The most similar command is:");
-            Console.WriteLine($"\t{command}");
         }
 
         private static int[] CalculateSymbolsMathesInCommands(string input)
         {
-            int[] counters = new int[commands.Length];
-            for (int i = 0; i < commands.Length; i++)
+            int[] counters = new int[Commands.Length];
+            for (int i = 0; i < Commands.Length; i++)
             {
-                if (input.Length > commands[i].Length)
+                if (input.Length > Commands[i].Length)
                 {
                     continue;
                 }
 
                 if (input.Length == 1)
                 {
-                    if (commands[i].StartsWith(input, StringComparison.InvariantCultureIgnoreCase))
+                    if (Commands[i].StartsWith(input, StringComparison.InvariantCultureIgnoreCase))
                     {
                         counters[i]++;
                     }
@@ -105,7 +72,7 @@ namespace FileCabinetApp.CommandHandlers
 
                 foreach (char symbol in input)
                 {
-                    if (commands[i].Contains(symbol, StringComparison.InvariantCultureIgnoreCase))
+                    if (Commands[i].Contains(symbol, StringComparison.InvariantCultureIgnoreCase))
                     {
                         counters[i]++;
                     }
@@ -129,7 +96,7 @@ namespace FileCabinetApp.CommandHandlers
             {
                 if (counters[i] == max)
                 {
-                    yield return commands[i];
+                    yield return Commands[i];
                 }
             }
         }

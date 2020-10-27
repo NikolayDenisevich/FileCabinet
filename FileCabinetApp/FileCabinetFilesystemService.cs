@@ -17,14 +17,9 @@ namespace FileCabinetApp
         private const short DeleteMask = 4;
         private readonly FileStream fileStream;
         private readonly IRecordValidator<RecordArguments> validator;
-
 #pragma warning disable SA1305 // Field names should not use Hungarian notation
         private readonly Dictionary<int, long> idIndexer = new Dictionary<int, long>();
 #pragma warning restore SA1305 // Field names should not use Hungarian notation
-        private readonly Dictionary<string, List<long>> firstNameIndexer = new Dictionary<string, List<long>>();
-        private readonly Dictionary<string, List<long>> lastNameIndexer = new Dictionary<string, List<long>>();
-        private readonly Dictionary<string, List<long>> dateOfBirthIndexer = new Dictionary<string, List<long>>();
-
         private int currentRecordsCount;
         private int maxId;
         private int deletedRecordsCount;
@@ -37,8 +32,8 @@ namespace FileCabinetApp
         /// <param name="fileStream">File stream for working with data file.</param>
         public FileCabinetFilesystemService(IRecordValidator<RecordArguments> validator, FileStream fileStream)
         {
-            this.validator = validator ?? throw new ArgumentNullException($"{nameof(validator)} is null");
-            this.fileStream = fileStream ?? throw new ArgumentNullException($"{nameof(fileStream)} is null");
+            this.validator = validator ?? throw new ArgumentNullException($"{nameof(validator)}");
+            this.fileStream = fileStream ?? throw new ArgumentNullException($"{nameof(fileStream)}");
             this.InintializeService();
         }
 
@@ -48,9 +43,9 @@ namespace FileCabinetApp
         /// <param name="records">The records collection for export.</param>
         /// <returns>The FileCabinetServiceSnapshot instance.</returns>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
+        public FileCabinetServiceSnapshot MakeSnapshot(IEnumerable<FileCabinetRecord> records)
         {
-            records = records ?? throw new ArgumentNullException($"{nameof(records)} is null");
+            records = records ?? throw new ArgumentNullException($"{nameof(records)}");
             return new FileCabinetServiceSnapshot(records);
         }
 
@@ -64,7 +59,7 @@ namespace FileCabinetApp
             (int, int) valueToReturn;
             if (this.deletedRecordsCount > 0)
             {
-                var notMarkedRecords = this.GetRecords();
+                var notMarkedRecords = this.GetRecords(null, null);
                 valueToReturn = (this.deletedRecordsCount, totalRecordsCount);
                 this.ReinitializeServiceThroughWritingRecordsCollection(notMarkedRecords);
             }
@@ -84,7 +79,7 @@ namespace FileCabinetApp
         /// <returns>Restored records count.</returns>
         public int Restore(FileCabinetServiceSnapshot snapshot)
         {
-            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)} is null");
+            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)}");
             int validRecordsCount = 0;
             IReadOnlyCollection<FileCabinetRecord> records = snapshot.Records;
 
@@ -144,7 +139,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentOutOfRangeException">Arguments.Salary range is 0..100 000.</exception>
         public int CreateRecord(RecordArguments arguments)
         {
-            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             this.validator.ValidateArguments(arguments);
             using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
             {
@@ -164,11 +159,7 @@ namespace FileCabinetApp
                     }
                 }
 
-                string stringDate = $"{arguments.DateOfBirth.Year}/{arguments.DateOfBirth.Month}/{arguments.DateOfBirth.Day}";
-                this.AddRecordToIndexer(currentRecordStartPosition, arguments.Id, this.idIndexer);
-                AddRecordToIndexer(currentRecordStartPosition, arguments.FirstName.ToUpperInvariant(), this.firstNameIndexer);
-                AddRecordToIndexer(currentRecordStartPosition, arguments.LastName.ToUpperInvariant(), this.lastNameIndexer);
-                AddRecordToIndexer(currentRecordStartPosition, stringDate, this.dateOfBirthIndexer);
+                this.AddRecordToIdsIndexer(currentRecordStartPosition, arguments.Id, this.idIndexer);
             }
 
             this.isRecordReadedFromImportedFile = default;
@@ -184,7 +175,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentException">There is no record #{arguments.Id} in the list.</exception>
         public void EditRecord(RecordArguments arguments)
         {
-            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             long foundRecordPosition = this.FindRecordPosition(arguments.Id);
             if (foundRecordPosition is -1)
             {
@@ -213,48 +204,12 @@ namespace FileCabinetApp
         }
 
         /// <summary>
-        /// Returns a sequence of records containing the date 'dateOfBirth'.
+        /// Returns records collection.
         /// </summary>
-        /// <param name="dateOfBirth">Search key.</param>
-        /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
-        /// <exception cref="ArgumentException">Thrown when dateOfBirth is less than 01-Jan-1950 and more than now.</exception>
-        public IEnumerable<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
-        {
-            string stringDate = $"{dateOfBirth.Year}/{dateOfBirth.Month}/{dateOfBirth.Day}";
-            return this.FindRecordsByKeyInIndexer(stringDate, this.dateOfBirthIndexer);
-        }
-
-        /// <summary>
-        /// Returns a sequence of records containing the name 'firstname'.
-        /// </summary>
-        /// <param name="firstName">Search key.</param>
-        /// <returns>A sequence of records containing the name 'firstname'.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
-        /// <exception cref="ArgumentException">Thrown when firstname length less than 2 or more than 60.</exception>
-        public IEnumerable<FileCabinetRecord> FindByFirstName(string firstName)
-        {
-            firstName = firstName ?? throw new ArgumentNullException($"{nameof(firstName)} is null");
-            return this.FindRecordsByKeyInIndexer(firstName, this.firstNameIndexer);
-        }
-
-        /// <summary>
-        /// Returns a sequence of records containing the name 'firstname'.
-        /// </summary>
-        /// <param name="lastName">Search key.</param>
-        /// <returns>A sequence of records containing the name 'lastName'.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
-        /// <exception cref="ArgumentException">Thrown when lastName length less than 2 or more than 60.</exception>
-        public IEnumerable<FileCabinetRecord> FindByLastName(string lastName)
-        {
-            lastName = lastName ?? throw new ArgumentNullException($"{nameof(lastName)} is null");
-            return this.FindRecordsByKeyInIndexer(lastName, this.lastNameIndexer);
-        }
-
-        /// <summary>
-        /// Returns the collection of all records.
-        /// </summary>
-        /// <returns>The collection of all records.</returns>
-        public IReadOnlyCollection<FileCabinetRecord> GetRecords()
+        /// <param name="filters">Filters string representation.</param>
+        /// <param name="predicate">Filtering condition.</param>
+        /// <returns>Readonly records collection.</returns>
+        public IEnumerable<FileCabinetRecord> GetRecords(string filters, Func<FileCabinetRecord, bool> predicate)
         {
             var recordsList = new List<FileCabinetRecord>();
             using BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
@@ -264,7 +219,7 @@ namespace FileCabinetApp
                 recordsList.Add(record);
             }
 
-            return recordsList;
+            return predicate is null ? recordsList : recordsList.Where(predicate);
         }
 
         /// <summary>
@@ -281,66 +236,6 @@ namespace FileCabinetApp
             int bytesToNextRecord = StringValuesLengthInBytes - ((value.Length * BytesInOneUnicodeSymbol) + 1);
             byte[] bytes = new byte[bytesToNextRecord];
             binaryWriter.Write(bytes);
-        }
-
-        private static void EditRecordInDictionary(string oldKey, string newKey, long recordPosition, Dictionary<string, List<long>> indexer)
-        {
-            oldKey = oldKey.ToUpperInvariant();
-            newKey = newKey.ToUpperInvariant();
-            List<long> positionsList;
-            if (!oldKey.Equals(newKey, StringComparison.InvariantCultureIgnoreCase))
-            {
-                indexer.TryGetValue(oldKey, out positionsList);
-
-                if (positionsList.Count is 1)
-                {
-                    indexer.Remove(oldKey, out positionsList);
-                }
-                else
-                {
-                    positionsList.Remove(recordPosition);
-                }
-
-                if (indexer.TryGetValue(newKey, out positionsList))
-                {
-                    positionsList.Add(recordPosition);
-                }
-                else
-                {
-                    positionsList = new List<long>();
-                    positionsList.Add(recordPosition);
-                    indexer.Add(newKey, positionsList);
-                }
-            }
-        }
-
-        private static void AddRecordToIndexer(long currentRecordStartPosition, string parameter, Dictionary<string, List<long>> indexer)
-        {
-            parameter = parameter.ToUpperInvariant();
-            bool isExistKey = indexer.TryGetValue(parameter, out List<long> valueList);
-            if (isExistKey)
-            {
-                valueList.Add(currentRecordStartPosition);
-            }
-            else
-            {
-                indexer.Add(parameter, new List<long>() { currentRecordStartPosition });
-            }
-        }
-
-        private static void RemoveRecordFromIndexer(string key, long recordPosition, Dictionary<string, List<long>> indexer)
-        {
-            key = key.ToUpperInvariant();
-            List<long> recordsPositions;
-            _ = indexer.TryGetValue(key, out recordsPositions);
-            if (recordsPositions.Count is 1)
-            {
-                _ = indexer.Remove(key, out _);
-            }
-            else
-            {
-                recordsPositions.Remove(recordPosition);
-            }
         }
 
         private static void WriteRecord(FileCabinetRecord record, BinaryWriter binaryWriter)
@@ -438,7 +333,7 @@ namespace FileCabinetApp
                 status &= DeleteMask;
                 if (status != DeleteMask)
                 {
-                    this.AddToIndexersFirstFourFields(reader, currentRecordStartPosition);
+                    this.AddToIndexerId(reader, currentRecordStartPosition);
                     this.currentRecordsCount++;
                 }
                 else
@@ -450,12 +345,9 @@ namespace FileCabinetApp
             }
         }
 
-        private void ReinitializeServiceThroughWritingRecordsCollection(IReadOnlyCollection<FileCabinetRecord> notMarkedRecords)
+        private void ReinitializeServiceThroughWritingRecordsCollection(IEnumerable<FileCabinetRecord> notMarkedRecords)
         {
             this.idIndexer.Clear();
-            this.firstNameIndexer.Clear();
-            this.lastNameIndexer.Clear();
-            this.dateOfBirthIndexer.Clear();
             this.deletedRecordsCount = 0;
             this.currentRecordsCount = 0;
 
@@ -465,29 +357,19 @@ namespace FileCabinetApp
                 foreach (var record in notMarkedRecords)
                 {
                     this.currentRecordsCount++;
-                    this.AddRecordToIndexer(this.fileStream.Position, record.Id, this.idIndexer);
-                    AddRecordToIndexer(this.fileStream.Position, record.FirstName, this.firstNameIndexer);
-                    AddRecordToIndexer(this.fileStream.Position, record.LastName, this.lastNameIndexer);
-                    string stringDate = $"{record.DateOfBirth.Year}/{record.DateOfBirth.Month}/{record.DateOfBirth.Day}";
-                    AddRecordToIndexer(this.fileStream.Position, stringDate, this.dateOfBirthIndexer);
-
+                    this.AddRecordToIdsIndexer(this.fileStream.Position, record.Id, this.idIndexer);
                     WriteRecord(record, writer);
                 }
 
-                this.fileStream.SetLength(OneRecordFullLengthInBytes * notMarkedRecords.Count);
+                this.fileStream.SetLength(OneRecordFullLengthInBytes * notMarkedRecords.Count());
             }
         }
 
-        private void AddToIndexersFirstFourFields(BinaryReader reader, long currentRecordStartPosition)
+        private void AddToIndexerId(BinaryReader reader, long currentRecordStartPosition)
         {
             this.fileStream.Seek(currentRecordStartPosition, SeekOrigin.Begin);
             var currentRecordValues = this.ReadRecordFirstFourFields(reader);
-            string currentDateOfBirth = $"{currentRecordValues.DateOfBirth.Year}/{currentRecordValues.DateOfBirth.Month}/{currentRecordValues.DateOfBirth.Day}";
-
-            this.AddRecordToIndexer(currentRecordStartPosition, currentRecordValues.Id, this.idIndexer);
-            AddRecordToIndexer(currentRecordStartPosition, currentRecordValues.FirstName, this.firstNameIndexer);
-            AddRecordToIndexer(currentRecordStartPosition, currentRecordValues.LastName, this.lastNameIndexer);
-            AddRecordToIndexer(currentRecordStartPosition, currentDateOfBirth, this.dateOfBirthIndexer);
+            this.AddRecordToIdsIndexer(currentRecordStartPosition, currentRecordValues.Id, this.idIndexer);
         }
 
         private void RemoveFromIndexers(long currentRecordStartPosition)
@@ -495,14 +377,10 @@ namespace FileCabinetApp
             using var reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
             this.fileStream.Seek(currentRecordStartPosition, SeekOrigin.Begin);
             var recordToRemove = this.ReadRecordFirstFourFields(reader);
-            this.RemoveRecordFromIndexer(recordToRemove.Id, this.idIndexer);
-            RemoveRecordFromIndexer(recordToRemove.FirstName, currentRecordStartPosition, this.firstNameIndexer);
-            RemoveRecordFromIndexer(recordToRemove.LastName, currentRecordStartPosition, this.lastNameIndexer);
-            string dateOfBirthToRemove = $"{recordToRemove.DateOfBirth.Year}/{recordToRemove.DateOfBirth.Month}/{recordToRemove.DateOfBirth.Day}";
-            RemoveRecordFromIndexer(dateOfBirthToRemove, currentRecordStartPosition, this.dateOfBirthIndexer);
+            this.RemoveRecordFromIdsIndexer(recordToRemove.Id, this.idIndexer);
         }
 
-        private void RemoveRecordFromIndexer(int key, Dictionary<int, long> indexer)
+        private void RemoveRecordFromIdsIndexer(int key, Dictionary<int, long> indexer)
         {
             indexer.Remove(key);
             if (key == this.maxId)
@@ -511,7 +389,7 @@ namespace FileCabinetApp
             }
         }
 
-        private void AddRecordToIndexer(long currentRecordStartPosition, int currentId, Dictionary<int, long> idsIndexer)
+        private void AddRecordToIdsIndexer(long currentRecordStartPosition, int currentId, Dictionary<int, long> idsIndexer)
         {
             if (currentId > this.maxId)
             {
@@ -537,11 +415,6 @@ namespace FileCabinetApp
             using BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true);
             this.fileStream.Seek(recordPosition, SeekOrigin.Begin);
             this.WriteArguments(arguments, binaryWriter);
-            EditRecordInDictionary(oldRecordValues.FirstName, arguments.FirstName, recordPosition, this.firstNameIndexer);
-            EditRecordInDictionary(oldRecordValues.LastName, arguments.LastName, recordPosition, this.lastNameIndexer);
-            string oldDateOfBirth = $"{oldRecordValues.DateOfBirth.Year}/{oldRecordValues.DateOfBirth.Month}/{oldRecordValues.DateOfBirth.Day}";
-            string newDateOfBirth = $"{arguments.DateOfBirth.Year}/{arguments.DateOfBirth.Month}/{arguments.DateOfBirth.Day}";
-            EditRecordInDictionary(oldDateOfBirth, newDateOfBirth, recordPosition, this.dateOfBirthIndexer);
         }
 
         private FileCabinetRecord ReadRecordFirstFourFields(BinaryReader reader)
@@ -574,21 +447,6 @@ namespace FileCabinetApp
                 this.fileStream.Seek(recordPosition, SeekOrigin.Begin);
                 status |= DeleteMask;
                 binaryWriter.Write(status);
-            }
-        }
-
-        private IEnumerable<FileCabinetRecord> FindRecordsByKeyInIndexer(string key, Dictionary<string, List<long>> indexer)
-        {
-            key = key.ToUpperInvariant();
-            bool isExist = indexer.TryGetValue(key, out List<long> recordsPositions);
-            if (isExist)
-            {
-                using var reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
-                for (int i = 0; i < recordsPositions.Count; i++)
-                {
-                    FileCabinetRecord record = this.ReadRecordFromFile(reader, recordsPositions[i]);
-                    yield return record;
-                }
             }
         }
     }
