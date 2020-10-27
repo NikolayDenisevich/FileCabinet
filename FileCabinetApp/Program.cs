@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
@@ -11,7 +12,7 @@ namespace FileCabinetApp
     /// </summary>
     public static class Program
     {
-        private const string DeveloperName = "Nikolay Sazhich";
+        private const string DeveloperName = "Nikolay Denisevich";
         private const string HintMessage = "Enter your command, or enter 'help' to get help.";
         private const int CommandHelpIndex = 0;
         private const int DescriptionHelpIndex = 1;
@@ -34,6 +35,7 @@ namespace FileCabinetApp
             new Tuple<string, Action<string>>("edit", Edit),
             new Tuple<string, Action<string>>("find", Find),
             new Tuple<string, Action<string>>("export", Export),
+            new Tuple<string, Action<string>>("import", Import),
         };
 
         private static Tuple<string, string, Action<string, string>>[] properties = new Tuple<string, string, Action<string, string>>[]
@@ -43,6 +45,8 @@ namespace FileCabinetApp
             new Tuple<string, string, Action<string, string>>("dateofbirth", "Date of birth", ShowByDate),
             new Tuple<string, string, Action<string, string>>("csv", "csv export", ExportToCsv),
             new Tuple<string, string, Action<string, string>>("xml", "xml export", ExportToXml),
+            new Tuple<string, string, Action<string, string>>("csv", "csv import", ImportFromCsv),
+            new Tuple<string, string, Action<string, string>>("xml", "xml import", ImportFromXml),
         };
 
         private static string[][] helpMessages = new string[][]
@@ -150,7 +154,7 @@ namespace FileCabinetApp
 
         private static void List(string parameters)
         {
-            ReadOnlyCollection<FileCabinetRecord> readOnlyCollection = fileCabinetService.GetRecords();
+            IReadOnlyCollection<FileCabinetRecord> readOnlyCollection = fileCabinetService.GetRecords();
             if (readOnlyCollection.Count != 0)
             {
                 ShowRecords(readOnlyCollection);
@@ -171,7 +175,7 @@ namespace FileCabinetApp
                 return;
             }
 
-            ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.GetRecords();
+            IReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.GetRecords();
             bool isExists = IsExistsRecordIdInList(id, readonlyCollection);
             if (!isExists)
             {
@@ -221,10 +225,12 @@ namespace FileCabinetApp
 
         private static void Find(string parameters)
         {
-            ParametersParser(parameters);
+            int startIndexFromTupleForFindMethod = 0;
+            int countMethodsInTupleForFindMethod = 3;
+            ParametersParser(parameters, startIndexFromTupleForFindMethod, countMethodsInTupleForFindMethod);
         }
 
-        private static void ParametersParser(string parameters)
+        private static void ParametersParser(string parameters, int startIndex, int count)
         {
             var inputs = parameters.Split(' ', 2);
             const int propertyIndex = 0;
@@ -236,7 +242,7 @@ namespace FileCabinetApp
                 return;
             }
 
-            int index = Array.FindIndex(properties, 0, properties.Length, i => i.Item1.Equals(property, StringComparison.InvariantCultureIgnoreCase));
+            int index = Array.FindIndex(properties, startIndex, count, i => i.Item1.Equals(property, StringComparison.InvariantCultureIgnoreCase));
             if (index >= 0)
             {
                 const int valueIndex = 1;
@@ -251,7 +257,78 @@ namespace FileCabinetApp
 
         private static void Export(string parameters)
         {
-            ParametersParser(parameters);
+            int startIndexFromTupleForExportMethod = 3;
+            int countMethodsInTupleForExportMethod = 2;
+            ParametersParser(parameters, startIndexFromTupleForExportMethod, countMethodsInTupleForExportMethod);
+        }
+
+        private static void Import(string parameters)
+        {
+            int startIndexFromTupleForImportMethod = 5;
+            int countMethodsInTupleForImportMethod = 2;
+            ParametersParser(parameters, startIndexFromTupleForImportMethod, countMethodsInTupleForImportMethod);
+        }
+
+        private static void ImportFromCsv(string propertyFullName, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                Console.WriteLine($"'{propertyFullName}' value is empty.");
+                return;
+            }
+
+            string filePath = value.Trim();
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"File {filePath} does not exist.");
+                return;
+            }
+
+            int restoredRecordsCount = GetRecordsFromScv(filePath);
+            Console.WriteLine($"{restoredRecordsCount} records were imported from {filePath}.");
+        }
+
+        private static int GetRecordsFromScv(string filePath)
+        {
+            var records = new ReadOnlyCollection<FileCabinetRecord>(new List<FileCabinetRecord>());
+            FileCabinetServiceSnapshot snapshot = fileCabinetService.MakeSnapshot(records);
+            FileStream fileStream = File.OpenRead(filePath);
+            StreamReader streamReader = new StreamReader(fileStream, Encoding.Unicode);
+            snapshot.LoadFromCsv(streamReader);
+            streamReader.Close();
+            fileStream.Close();
+            return fileCabinetService.Restore(snapshot);
+        }
+
+        private static void ImportFromXml(string propertyFullName, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                Console.WriteLine($"'{propertyFullName}' value is empty.");
+                return;
+            }
+
+            string filePath = value.Trim();
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"File {filePath} does not exist.");
+                return;
+            }
+
+            int restoredRecordsCount = GetRecordsFromXml(filePath);
+            Console.WriteLine($"{restoredRecordsCount} records were imported from {filePath}.");
+        }
+
+        private static int GetRecordsFromXml(string filePath)
+        {
+            var records = new ReadOnlyCollection<FileCabinetRecord>(new List<FileCabinetRecord>());
+            FileCabinetServiceSnapshot snapshot = fileCabinetService.MakeSnapshot(records);
+            FileStream fileStream = File.OpenRead(filePath);
+            StreamReader streamReader = new StreamReader(fileStream, Encoding.Unicode);
+            snapshot.LoadFromXml(streamReader);
+            streamReader.Close();
+            fileStream.Close();
+            return fileCabinetService.Restore(snapshot);
         }
 
         private static void ExportToXml(string propertyFullName, string value)
@@ -259,6 +336,12 @@ namespace FileCabinetApp
             if (string.IsNullOrEmpty(value))
             {
                 Console.WriteLine($"'{propertyFullName}' value is empty.");
+                return;
+            }
+
+            if (fileCabinetService.GetStat() is 0)
+            {
+                Console.WriteLine("There is nothing to export. Records count is 0.");
                 return;
             }
 
@@ -300,10 +383,9 @@ namespace FileCabinetApp
 
         private static void SaveToXml(string filePath)
         {
-            FileCabinetMemoryService servise = fileCabinetService as FileCabinetMemoryService;
-            var records = servise.GetRecords();
-            FileCabinetServiceSnapshot snapshot = FileCabinetMemoryService.MakeSnapshot(records);
-            using (var streamWriter = new StreamWriter(filePath, false, Encoding.UTF8))
+            var records = fileCabinetService.GetRecords();
+            FileCabinetServiceSnapshot snapshot = fileCabinetService.MakeSnapshot(records);
+            using (var streamWriter = new StreamWriter(filePath, false, Encoding.Unicode))
             {
                 snapshot.SaveToXml(streamWriter);
                 Console.WriteLine($"All records are exported to file {filePath}.");
@@ -315,6 +397,12 @@ namespace FileCabinetApp
             if (string.IsNullOrEmpty(value))
             {
                 Console.WriteLine($"'{propertyFullName}' value is empty.");
+                return;
+            }
+
+            if (fileCabinetService.GetStat() is 0)
+            {
+                Console.WriteLine("There is nothing to export. Records count is 0.");
                 return;
             }
 
@@ -389,10 +477,9 @@ namespace FileCabinetApp
 
         private static void SaveToCsv(string filePath)
         {
-            FileCabinetMemoryService servise = fileCabinetService as FileCabinetMemoryService;
-            var records = servise.GetRecords();
-            FileCabinetServiceSnapshot snapshot = FileCabinetMemoryService.MakeSnapshot(records);
-            using (var streamWriter = new StreamWriter(filePath, false, Encoding.UTF8))
+            var records = fileCabinetService.GetRecords();
+            FileCabinetServiceSnapshot snapshot = fileCabinetService.MakeSnapshot(records);
+            using (var streamWriter = new StreamWriter(filePath, false, Encoding.Unicode))
             {
                 snapshot.SaveToCsv(streamWriter);
                 Console.WriteLine($"All records are exported to file {filePath}.");
@@ -410,7 +497,7 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByFirstName(trimmedValue);
+                IReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByFirstName(trimmedValue);
                 CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, trimmedValue);
             }
             else
@@ -424,7 +511,7 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByLastName(trimmedValue);
+                IReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByLastName(trimmedValue);
                 CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, trimmedValue);
             }
             else
@@ -442,7 +529,7 @@ namespace FileCabinetApp
                 bool isParsed = DateTime.TryParse(trimmedValue, out dateOfBirth);
                 if (isParsed)
                 {
-                    ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByDateOfBirth(dateOfBirth);
+                    IReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByDateOfBirth(dateOfBirth);
                     CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, value);
                 }
                 else
@@ -456,7 +543,7 @@ namespace FileCabinetApp
             }
         }
 
-        private static void ShowRecords(ReadOnlyCollection<FileCabinetRecord> records)
+        private static void ShowRecords(IReadOnlyCollection<FileCabinetRecord> records)
         {
             foreach (var item in records)
             {
@@ -464,7 +551,7 @@ namespace FileCabinetApp
             }
         }
 
-        private static void CheckRecordsForZeroOrShow(ReadOnlyCollection<FileCabinetRecord> records, string propertyName, string input)
+        private static void CheckRecordsForZeroOrShow(IReadOnlyCollection<FileCabinetRecord> records, string propertyName, string input)
         {
             if (records.Count == 0)
             {
@@ -476,7 +563,7 @@ namespace FileCabinetApp
             }
         }
 
-        private static bool IsExistsRecordIdInList(int id, ReadOnlyCollection<FileCabinetRecord> collection)
+        private static bool IsExistsRecordIdInList(int id, IReadOnlyCollection<FileCabinetRecord> collection)
         {
             bool isExists = false;
 
@@ -627,8 +714,8 @@ namespace FileCabinetApp
         private static Tuple<bool, string, decimal> DecimalConverter(string input)
         {
             decimal salary;
-            bool isParsed = decimal.TryParse(input.Trim(), out salary);
-            string message = "Correct format is: decimal numbers.";
+            bool isParsed = decimal.TryParse(input.Trim(), NumberStyles.Float | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out salary);
+            string message = "Correct format is: decimal numbers (for example: 15.65).";
             return new Tuple<bool, string, decimal>(isParsed, message, salary);
         }
 

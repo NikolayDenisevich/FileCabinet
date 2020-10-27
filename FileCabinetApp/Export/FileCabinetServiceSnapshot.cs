@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Xml;
 
 namespace FileCabinetApp
@@ -12,22 +12,30 @@ namespace FileCabinetApp
     /// </summary>
     public class FileCabinetServiceSnapshot
     {
-        private readonly ReadOnlyCollection<FileCabinetRecord> records;
+        private List<FileCabinetRecord> records;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetServiceSnapshot"/> class.
         /// </summary>
         /// <param name="records">The FileCabinetRecords collection.</param>
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
-        public FileCabinetServiceSnapshot(ReadOnlyCollection<FileCabinetRecord> records)
+        public FileCabinetServiceSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
         {
             if (records is null)
             {
                 throw new ArgumentNullException($"{nameof(records)} is null");
             }
 
-            this.records = records;
+            this.records = new List<FileCabinetRecord>(records);
         }
+
+        /// <summary>
+        /// Gets records readonly collection.
+        /// </summary>
+        /// <value>
+        /// Records readonly collection.
+        /// </value>
+        public IReadOnlyCollection<FileCabinetRecord> Records => new ReadOnlyCollection<FileCabinetRecord>(this.records);
 
         /// <summary>
         /// Saves records to csv.
@@ -40,9 +48,6 @@ namespace FileCabinetApp
             {
                 throw new ArgumentNullException($"{nameof(streamWriter)} is null");
             }
-
-            string topic = $"Id, FirstName, LastName, Date of Birth, Zip code, City, Street, Salary, Gender";
-            streamWriter.WriteLine(topic);
 
             FileCabinetRecordCsvWriter csvWriter = new FileCabinetRecordCsvWriter(streamWriter);
             foreach (var item in this.records)
@@ -76,6 +81,28 @@ namespace FileCabinetApp
 
                 xmlWriter.WriteEndDocument();
             }
+        }
+
+        /// <summary>
+        /// Loads records from csv file.
+        /// </summary>
+        /// <param name="streamReader">The StreamReader instance.</param>
+        public void LoadFromCsv(StreamReader streamReader)
+        {
+            FileCabinetRecordCsvReader csvReader = new FileCabinetRecordCsvReader(streamReader);
+            var list = csvReader.ReadAll();
+            this.records = list as List<FileCabinetRecord>;
+        }
+
+        /// <summary>
+        /// Loads records from xml file.
+        /// </summary>
+        /// <param name="streamReader">The StreamReader instance.</param>
+        internal void LoadFromXml(StreamReader streamReader)
+        {
+            FileCabinetRecordXmlReader xmlReader = new FileCabinetRecordXmlReader(streamReader);
+            var list = xmlReader.ReadAll();
+            this.records = list as List<FileCabinetRecord>;
         }
     }
 }

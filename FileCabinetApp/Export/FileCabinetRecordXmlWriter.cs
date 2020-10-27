@@ -53,7 +53,7 @@ namespace FileCabinetApp
 
                 {
                     this.xmlWriter.WriteStartElement($"{nameof(record.DateOfBirth)}");
-                    this.xmlWriter.WriteValue($"{record.DateOfBirth.ToString("dd//mm/yyyy", DateTimeFormatInfo.InvariantInfo)}");
+                    this.xmlWriter.WriteValue($"{record.DateOfBirth.ToString("dd/mm/yyyy", DateTimeFormatInfo.InvariantInfo)}");
                     this.xmlWriter.WriteEndElement();
                 }
 
