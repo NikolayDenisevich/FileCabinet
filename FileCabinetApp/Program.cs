@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
 
 namespace FileCabinetApp
 {
+    /// <summary>
+    /// Provides UI for file cabinet application.
+    /// </summary>
     public static class Program
     {
         private const string DeveloperName = "Nikolay Denisevich";
@@ -12,7 +16,9 @@ namespace FileCabinetApp
         private const int ExplanationHelpIndex = 2;
 
         private static bool isRunning = true;
-        private static FileCabinetService fileCabinetService = new FileCabinetService();
+        private static IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService;
+        private static IRecordValidator<RecordArguments> recordValidator;
+        private static InputValidator inputValidator;
 
         private static Tuple<string, Action<string>>[] commands = new Tuple<string, Action<string>>[]
         {
@@ -40,12 +46,17 @@ namespace FileCabinetApp
             new string[] { "create", "creates a new record", "The 'create' creates a new record." },
             new string[] { "list", "displays a list of records added to the service.", "The 'list' displays a list of records added to the service." },
             new string[] { "edit", "edits an existing record.", "The 'edit 1' edits an existing record #1." },
-            new string[] { "find", "finds records with a scpecified firstname or lastname.", "The 'find firstname Petr' serches all records with firstname Petr." },
+            new string[] { "find", "finds records with a scpecified properties: 'firstname', 'lastname' or 'dateofbirth'.", "The 'find firstname Petr' serches all records with firstname Petr." },
         };
 
+        /// <summary>
+        /// An application entry point.
+        /// </summary>
+        /// <param name="args">Command-line arguments.</param>
         public static void Main(string[] args)
         {
             Console.WriteLine($"File Cabinet Application, developed by {Program.DeveloperName}");
+            CheckCommandLineArguments(args);
             Console.WriteLine(Program.HintMessage);
             Console.WriteLine();
 
@@ -124,53 +135,80 @@ namespace FileCabinetApp
 
         private static void Create(string parameters)
         {
-            string firstName = ReadNames("First Name: ");
-            string lastName = ReadNames("Last Name: ");
-            DateTime dateTimeBirth = ReadDate("Date of birth: ");
-            short zipCode = ReadZipCode("ZIP Code: ");
-            string city = ReadNames("City: ");
-            string street = ReadNames("Street: ");
-            decimal salary = ReadSalary("Salary: ");
-            char gender = ReadGender("Gender: ");
-            Console.WriteLine($"Record #{fileCabinetService.CreateRecord(firstName, lastName, dateTimeBirth, zipCode, city, street, salary, gender)} is created");
+            RecordArguments arguments = ReadArguments();
+            int id = fileCabinetService.CreateRecord(arguments);
+            Console.WriteLine($"Record #{id} is created");
+        }
+
+        private static void List(string parameters)
+        {
+            ReadOnlyCollection<FileCabinetRecord> readOnlyCollection = fileCabinetService.GetRecords();
+            if (readOnlyCollection.Count != 0)
+            {
+                ShowRecords(readOnlyCollection);
+            }
+            else
+            {
+                Console.WriteLine("There is no records in list");
+            }
         }
 
         private static void Edit(string parameters)
         {
             int id;
-            if (!int.TryParse(parameters, out id) || id == 0)
+            bool isParsed = int.TryParse(parameters, out id);
+            if (!isParsed || id == 0)
             {
-                Console.WriteLine($"#{id} record is not found.");
+                Console.WriteLine($"Record is not found.");
                 return;
             }
 
-            FileCabinetRecord[] list = fileCabinetService.GetRecords();
-            bool isFound = false;
-            foreach (var item in list)
+            ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.GetRecords();
+            bool isExists = IsExistsRecordIdInList(id, readonlyCollection);
+            if (!isExists)
             {
-                if (item.Id == id)
-                {
-                    isFound = true;
-                    break;
-                }
-            }
-
-            if (!isFound)
-            {
-                Console.WriteLine($"#{id} record is not found.");
+                Console.WriteLine($"Record #{id} is not found.");
                 return;
             }
 
-            string firstName = ReadNames("First Name: ");
-            string lastName = ReadNames("Last Name: ");
-            DateTime dateTimeBirth = ReadDate("Date of birth: ");
-            short zipCode = ReadZipCode("ZIP Code: ");
-            string city = ReadNames("City: ");
-            string street = ReadNames("Street: ");
-            decimal salary = ReadSalary("Salary: ");
-            char gender = ReadGender("Gender: ");
-            fileCabinetService.EditRecord(id, firstName, lastName, dateTimeBirth, zipCode, city, street, salary, gender);
+            RecordArguments arguments = ReadArguments();
+            arguments.Id = id;
+
+            fileCabinetService.EditRecord(arguments);
             Console.WriteLine($"Record #{id} is updated");
+        }
+
+        private static RecordArguments ReadArguments()
+        {
+            Console.Write("First Name: ");
+            string firstName = ReadInput(StringsConverter, inputValidator.ValidateStrings);
+            Console.Write("Last Name: ");
+            string lastName = ReadInput(StringsConverter, inputValidator.ValidateStrings);
+            Console.Write("Date of birth: ");
+            DateTime dateOfBirth = ReadInput(DatesConverter, inputValidator.ValidateDate);
+            Console.Write("Zip code: ");
+            short zipCode = ReadInput(ShortConverter, inputValidator.ValidateShort);
+            Console.Write("City: ");
+            string city = ReadInput(StringsConverter, inputValidator.ValidateStrings);
+            Console.Write("Street: ");
+            string street = ReadInput(StringsConverter, inputValidator.ValidateStrings);
+            Console.Write("Salary: ");
+            decimal salary = ReadInput(DecimalConverter, inputValidator.ValidateDecimal);
+            Console.Write("Gender: ");
+            char gender = ReadInput(CharConverter, inputValidator.ValidateChar);
+
+            var arguments = new RecordArguments
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                DateOfBirth = dateOfBirth,
+                ZipCode = zipCode,
+                City = city,
+                Street = street,
+                Salary = salary,
+                Gender = gender,
+            };
+            return arguments;
         }
 
         private static void Find(string parameters)
@@ -198,9 +236,9 @@ namespace FileCabinetApp
             }
         }
 
-        private static void PrintMissedPropertyInfo(string property)
+        private static void PrintMissedPropertyInfo(string propertyName)
         {
-            Console.WriteLine($"There is no '{property}' property.");
+            Console.WriteLine($"There is no '{propertyName}' property.");
             Console.WriteLine();
         }
 
@@ -209,8 +247,9 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                FileCabinetRecord[] records = fileCabinetService.FindByFirstName(trimmedValue);
-                CheckRecordsForZeroOrShow(records, propertyFullName, trimmedValue);
+                FileCabinetService service = fileCabinetService as FileCabinetService;
+                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByFirstName(trimmedValue);
+                CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, trimmedValue);
             }
             else
             {
@@ -223,8 +262,9 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                FileCabinetRecord[] records = fileCabinetService.FindByLastName(trimmedValue);
-                CheckRecordsForZeroOrShow(records, propertyFullName, trimmedValue);
+                FileCabinetService service = fileCabinetService as FileCabinetService;
+                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByLastName(trimmedValue);
+                CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, trimmedValue);
             }
             else
             {
@@ -238,10 +278,12 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                if (DateTime.TryParse(trimmedValue, out dateOfBirth))
+                bool isParsed = DateTime.TryParse(trimmedValue, out dateOfBirth);
+                if (isParsed)
                 {
-                    FileCabinetRecord[] records = fileCabinetService.FindByDateOfBirth(dateOfBirth);
-                    CheckRecordsForZeroOrShow(records, propertyFullName, value);
+                    FileCabinetService service = fileCabinetService as FileCabinetService;
+                    ReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByDateOfBirth(dateOfBirth);
+                    CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, value);
                 }
                 else
                 {
@@ -254,123 +296,7 @@ namespace FileCabinetApp
             }
         }
 
-        private static string ReadNames(string parameterName)
-        {
-            Console.Write($"{parameterName}");
-            string input = Console.ReadLine().Trim();
-            while (string.IsNullOrWhiteSpace(input) || input.Length < 2 || input.Length > 60)
-            {
-                Console.WriteLine($"{parameterName}minimum number of characters is 2, maximum is 60 and cannot be empty or or contain only space characters please try again:");
-                Console.Write($"{parameterName}");
-                input = Console.ReadLine().Trim();
-            }
-
-            return input;
-        }
-
-        private static DateTime ReadDate(string parameterName)
-        {
-            Console.Write($"{parameterName}");
-            string input = Console.ReadLine();
-            bool isCorrectDate = false;
-            DateTime dateTimeBirth;
-            do
-            {
-                if (!DateTime.TryParse(input, out dateTimeBirth))
-                {
-                    Console.WriteLine("Invalid format: Date of birth");
-                    Console.WriteLine("Correct format is: dd/mm/yyyy");
-                    Console.WriteLine("Please, repeat:");
-                    Console.Write($"{parameterName}");
-                    input = Console.ReadLine();
-                }
-                else
-                {
-                    if (dateTimeBirth < new DateTime(1950, 1, 1) || dateTimeBirth > DateTime.Now)
-                    {
-                        Console.WriteLine($"Date of birth should be more than 01-Jan-1950 and not more than {DateTime.Now.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)}");
-                        Console.WriteLine("Please, repeat input.");
-                        Console.Write($"{parameterName}");
-                        input = Console.ReadLine();
-                    }
-                    else
-                    {
-                        isCorrectDate = true;
-                    }
-                }
-            }
-            while (!isCorrectDate);
-            return dateTimeBirth;
-        }
-
-        private static short ReadZipCode(string parameterName)
-        {
-            Console.Write($"{parameterName}");
-            short zipCode = 0;
-            bool isParsed = false;
-            while (!isParsed || zipCode < 0 || zipCode > 9999)
-            {
-                isParsed = short.TryParse(Console.ReadLine().Trim(), out zipCode);
-                if (!isParsed || zipCode < 0 || zipCode > 9999)
-                {
-                    Console.WriteLine($"{parameterName} range is 1..9999 or invalid input. Please repeat input.");
-                    Console.Write($"{parameterName}: ");
-                }
-            }
-
-            return zipCode;
-        }
-
-        private static decimal ReadSalary(string parameterName)
-        {
-            Console.Write($"{parameterName}");
-            decimal salary = 0;
-            bool isParsed = false;
-            while (!isParsed || salary < 0 || salary > 100000)
-            {
-                isParsed = decimal.TryParse(Console.ReadLine().Trim(), out salary);
-                if (!isParsed || salary < 0 || salary > 100000)
-                {
-                    Console.WriteLine($"{parameterName}range is 1..100 000, or invalid input. Please repeat input.");
-                    Console.Write($"{parameterName}");
-                }
-            }
-
-            return salary;
-        }
-
-        private static char ReadGender(string parameterName)
-        {
-            Console.Write($"{parameterName}");
-            char gender = default;
-            bool isParsed = false;
-            while (!isParsed || (gender != 'm' && gender != 'M' && gender != 'f' && gender != 'F'))
-            {
-                isParsed = char.TryParse(Console.ReadLine().Trim(), out gender);
-                if (!isParsed || (gender != 'm' && gender != 'M' && gender != 'f' && gender != 'F'))
-                {
-                    Console.WriteLine($"{parameterName}permissible values are :'m', 'M', 'f', 'F'. Please repeat input.");
-                    Console.Write($"{parameterName}");
-                }
-            }
-
-            return gender;
-        }
-
-        private static void List(string parameters)
-        {
-            FileCabinetRecord[] list = fileCabinetService.GetRecords();
-            if (list.Length != 0)
-            {
-                ShowRecords(list);
-            }
-            else
-            {
-                Console.WriteLine("There is no records in list");
-            }
-        }
-
-        private static void ShowRecords(FileCabinetRecord[] records)
+        private static void ShowRecords(ReadOnlyCollection<FileCabinetRecord> records)
         {
             foreach (var item in records)
             {
@@ -379,9 +305,9 @@ namespace FileCabinetApp
             }
         }
 
-        private static void CheckRecordsForZeroOrShow(FileCabinetRecord[] records, string propertyName, string input)
+        private static void CheckRecordsForZeroOrShow(ReadOnlyCollection<FileCabinetRecord> records, string propertyName, string input)
         {
-            if (records.Length == 0)
+            if (records.Count == 0)
             {
                 Console.WriteLine($"There is no records with {propertyName} '{input}'");
             }
@@ -389,6 +315,155 @@ namespace FileCabinetApp
             {
                 ShowRecords(records);
             }
+        }
+
+        private static bool IsExistsRecordIdInList(int id, ReadOnlyCollection<FileCabinetRecord> collection)
+        {
+            bool isExists = false;
+
+            foreach (var item in collection)
+            {
+                if (item.Id == id)
+                {
+                    isExists = true;
+                    break;
+                }
+            }
+
+            return isExists;
+        }
+
+        private static void CheckCommandLineArguments(string[] args)
+        {
+            if (args is null || args.Length == 0)
+            {
+                CreateFileCabinerDefaultServiceInstance();
+            }
+            else
+            {
+                switch (args[0].ToUpperInvariant())
+                {
+                    case "--VALIDATION-RULES=CUSTOM":
+                        {
+                            CreateFileCabinerCustomServiceInstance();
+                            break;
+                        }
+
+                    case "--VALIDATION-RULES=DEFAULT":
+                        {
+                            CreateFileCabinerDefaultServiceInstance();
+                            break;
+                        }
+
+                    case "-V":
+                        {
+                            if (args.Length < 2 || args[1].Equals("default", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                CreateFileCabinerDefaultServiceInstance();
+                                break;
+                            }
+
+                            if (args[1].Equals("custom", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                CreateFileCabinerCustomServiceInstance();
+                                break;
+                            }
+                            else
+                            {
+                                CreateFileCabinerDefaultServiceInstance();
+                                break;
+                            }
+                        }
+
+                    default:
+                        {
+                            CreateFileCabinerDefaultServiceInstance();
+                            break;
+                        }
+                }
+            }
+        }
+
+        private static void CreateFileCabinerDefaultServiceInstance()
+        {
+            Console.WriteLine("Using default validation rules.");
+            recordValidator = new DefaultValidator();
+            inputValidator = recordValidator.GetInputValidator();
+            fileCabinetService = new FileCabinetService(recordValidator);
+        }
+
+        private static void CreateFileCabinerCustomServiceInstance()
+        {
+            Console.WriteLine("Using custom validation rules.");
+            recordValidator = new CustomValidator();
+            inputValidator = recordValidator.GetInputValidator();
+            fileCabinetService = new FileCabinetService(recordValidator);
+        }
+
+        private static Tuple<bool, string, string> StringsConverter(string input)
+        {
+            return new Tuple<bool, string, string>(true, string.Empty, input.Trim());
+        }
+
+        private static Tuple<bool, string, DateTime> DatesConverter(string input)
+        {
+            DateTime dateOfBirth;
+            bool isParsed = DateTime.TryParse(input.Trim(), out dateOfBirth);
+            string message = "Correct format is: dd/mm/yyyy";
+            return new Tuple<bool, string, DateTime>(isParsed, message, dateOfBirth);
+        }
+
+        private static Tuple<bool, string, short> ShortConverter(string input)
+        {
+            short zipCode;
+            bool isParsed = short.TryParse(input.Trim(), out zipCode);
+            string message = "Correct format is: 1-4-digit numbers only";
+            return new Tuple<bool, string, short>(isParsed, message, zipCode);
+        }
+
+        private static Tuple<bool, string, decimal> DecimalConverter(string input)
+        {
+            decimal salary;
+            bool isParsed = decimal.TryParse(input.Trim(), out salary);
+            string message = "Correct format is: decimal numbers.";
+            return new Tuple<bool, string, decimal>(isParsed, message, salary);
+        }
+
+        private static Tuple<bool, string, char> CharConverter(string input)
+        {
+            char gender;
+            bool isParsed = char.TryParse(input.Trim(), out gender);
+            string message = "Correct format is: one character only";
+            return new Tuple<bool, string, char>(isParsed, message, gender);
+        }
+
+        private static T ReadInput<T>(Func<string, Tuple<bool, string, T>> converter, Func<T, Tuple<bool, string>> validator)
+        {
+            do
+            {
+                T value;
+
+                var input = Console.ReadLine();
+                var conversionResult = converter(input);
+
+                if (!conversionResult.Item1)
+                {
+                    Console.WriteLine($"Conversion failed: {conversionResult.Item2}. Please, correct your input.");
+                    continue;
+                }
+
+                value = conversionResult.Item3;
+
+                var validationResult = validator(value);
+                if (!validationResult.Item1)
+                {
+                    Console.WriteLine($"Validation failed: {validationResult.Item2}. Please, correct your input.");
+                    continue;
+                }
+
+                return value;
+            }
+            while (true);
         }
     }
 }

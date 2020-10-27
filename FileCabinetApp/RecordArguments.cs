@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace FileCabinetApp
 {
     /// <summary>
-    /// Provides an object representation of FileCabinetRecord.
+    /// Provides an object that contains record arguments.
     /// </summary>
-    public class FileCabinetRecord
+    public class RecordArguments
     {
         /// <summary>
         /// Gets or sets the ID value of this instance.

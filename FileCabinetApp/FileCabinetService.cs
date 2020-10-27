@@ -1,161 +1,199 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 
 namespace FileCabinetApp
 {
-    public class FileCabinetService
+    /// <summary>
+    /// Provides a file cabinet record service.
+    /// </summary>
+    public class FileCabinetService : IFileCabinetService<FileCabinetRecord, RecordArguments>
     {
         private readonly List<FileCabinetRecord> list = new List<FileCabinetRecord>();
         private readonly Dictionary<string, List<FileCabinetRecord>> firstNameDictionary = new Dictionary<string, List<FileCabinetRecord>>();
         private readonly Dictionary<string, List<FileCabinetRecord>> lastNameDictionary = new Dictionary<string, List<FileCabinetRecord>>();
         private readonly Dictionary<string, List<FileCabinetRecord>> dateOfBirthDictionary = new Dictionary<string, List<FileCabinetRecord>>();
+        private IRecordValidator<RecordArguments> validator;
 
-        public int CreateRecord(string firstName, string lastName, DateTime dateOfBirth, short zipCode, string city, string street, decimal salary, char gender)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="FileCabinetService"/> class.
+        /// </summary>
+        /// <param name="validator">The arguments record validator.</param>
+        public FileCabinetService(IRecordValidator<RecordArguments> validator)
         {
-            this.ValidateArgumets(firstName, lastName, dateOfBirth, zipCode, city, street, salary, gender);
+            this.validator = validator;
+        }
+
+        /// <summary>
+        /// Сreates a record in the list.
+        /// </summary>
+        /// <param name="arguments">File cabinet record arguments.</param>
+        /// <returns>Record ID.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when arguments.Firstname, or arguments.Lastname, or arguments.City, or arguments.Street is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when arguments.Firstname, or arguments.Lsatname, or arguments.City, or arguments.Street trimmed length less than 2 or more than 60.</exception>
+        /// <exception cref="ArgumentException">Thrown when arguments.DateOfBirth is less than 01-Jan-1950 and more than now.</exception>
+        /// <exception cref="ArgumentException">For parameter arguments.Gender permissible values are :'m', 'M', 'f', 'F'.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Arguments.ZipCode range is 1..9999.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Arguments.Salary range is 0..100 000.</exception>
+        public int CreateRecord(RecordArguments arguments)
+        {
+            if (arguments is null)
+            {
+                throw new ArgumentNullException($"{nameof(arguments)} is null");
+            }
+
+            this.validator.ValidateArguments(arguments);
+
             var record = new FileCabinetRecord
             {
                 Id = this.list.Count + 1,
-                FirstName = firstName,
-                LastName = lastName,
-                DateOfBirth = dateOfBirth,
-                ZipCode = zipCode,
-                City = city,
-                Street = street,
-                Salary = salary,
-                Gender = gender,
+                FirstName = arguments.FirstName,
+                LastName = arguments.LastName,
+                DateOfBirth = arguments.DateOfBirth,
+                ZipCode = arguments.ZipCode,
+                City = arguments.City,
+                Street = arguments.Street,
+                Salary = arguments.Salary,
+                Gender = arguments.Gender,
             };
 
             this.list.Add(record);
-            this.AddRecordToDictionary(firstName, record, this.firstNameDictionary);
-            this.AddRecordToDictionary(lastName, record, this.lastNameDictionary);
-            this.AddRecordToDictionary(dateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), record, this.dateOfBirthDictionary);
+#pragma warning disable CA1062 // Validate arguments of public methods
+            AddRecordToDictionary(arguments.FirstName, record, this.firstNameDictionary);
+            AddRecordToDictionary(arguments.LastName, record, this.lastNameDictionary);
+#pragma warning restore CA1062 // Validate arguments of public methods
+            AddRecordToDictionary(arguments.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), record, this.dateOfBirthDictionary);
 
             return record.Id;
         }
 
-        public void EditRecord(int id, string firstName, string lastName, DateTime dateOfBirth, short zipCode, string city, string street, decimal salary, char gender)
+        /// <summary>
+        /// Edits a record in the list.
+        /// </summary>
+        /// <param name="arguments">File cabinet record arguments.</param>
+        /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when arguments.Firstname, or arguments.Lastname, or arguments.City, or arguments.Street is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when arguments.Firstname, or arguments.Lsatname, or arguments.City, or arguments.Street trimmed length less than 2 or more than 60.</exception>
+        /// <exception cref="ArgumentException">Thrown when arguments.DateOfBirth is less than 01-Jan-1950 and more than now.</exception>
+        /// <exception cref="ArgumentException">For parameter arguments.Gender permissible values are :'m', 'M', 'f', 'F'.</exception>
+        /// <exception cref="ArgumentException">There is no record #{arguments.Id} in the list.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Arguments.ZipCode range is 1..9999.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Arguments.Salary range is 0..100 000.</exception>
+        public void EditRecord(RecordArguments arguments)
         {
-            this.ValidateArgumets(firstName, lastName, dateOfBirth, zipCode, city, street, salary, gender);
-            FileCabinetRecord listRecord = this.list.Find(i => i.Id == id);
+            if (arguments is null)
+            {
+                throw new ArgumentNullException($"{nameof(arguments)} is null");
+            }
+
+            this.validator.ValidateArguments(arguments);
+            FileCabinetRecord listRecord = this.list.Find(i => i.Id == arguments.Id);
             if (listRecord is null)
             {
-                throw new ArgumentException($"There is no record #{id} in the list.");
+                throw new ArgumentException($"There is no record #{arguments.Id} in the list.");
             }
 
             string oldFirstName = listRecord.FirstName;
             string oldLastName = listRecord.LastName;
             string oldDateOfBirth = listRecord.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo);
-            listRecord.FirstName = firstName;
-            listRecord.LastName = lastName;
-            listRecord.DateOfBirth = dateOfBirth;
-            listRecord.ZipCode = zipCode;
-            listRecord.City = city;
-            listRecord.Street = street;
-            listRecord.Salary = salary;
-            listRecord.Gender = gender;
+            listRecord.FirstName = arguments.FirstName;
+            listRecord.LastName = arguments.LastName;
+            listRecord.DateOfBirth = arguments.DateOfBirth;
+            listRecord.ZipCode = arguments.ZipCode;
+            listRecord.City = arguments.City;
+            listRecord.Street = arguments.Street;
+            listRecord.Salary = arguments.Salary;
+            listRecord.Gender = arguments.Gender;
 
-            this.EditRecordInDictionary(oldFirstName, firstName, id, listRecord, this.firstNameDictionary);
-            this.EditRecordInDictionary(oldLastName, lastName, id, listRecord, this.lastNameDictionary);
-            this.EditRecordInDictionary(oldDateOfBirth, dateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), id, listRecord, this.dateOfBirthDictionary);
+#pragma warning disable CA1062 // Validate arguments of public methods
+            EditRecordInDictionary(oldFirstName, arguments.FirstName, arguments.Id, listRecord, this.firstNameDictionary);
+            EditRecordInDictionary(oldLastName, arguments.LastName, arguments.Id, listRecord, this.lastNameDictionary);
+#pragma warning restore CA1062 // Validate arguments of public methods
+            EditRecordInDictionary(oldDateOfBirth, arguments.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), arguments.Id, listRecord, this.dateOfBirthDictionary);
         }
 
-        public FileCabinetRecord[] FindByFirstName(string firstName) => this.GetRecordsFromDictionary(firstName, this.firstNameDictionary);
-
-        public FileCabinetRecord[] FindByLastName(string lastName) => this.GetRecordsFromDictionary(lastName, this.lastNameDictionary);
-
-        public FileCabinetRecord[] FindByDateOfBirth(DateTime date) => this.GetRecordsFromDictionary(date.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), this.dateOfBirthDictionary);
-
-        public FileCabinetRecord[] GetRecords()
-        {
-            return this.list.ToArray();
-        }
-
-        public int GetStat()
-        {
-            return this.list.Count;
-        }
-
-        private void ValidateArgumets(string firstName, string lastName, DateTime dateOfBirth, short zipCode, string city, string street, decimal salary, char gender)
+        /// <summary>
+        /// Returns a sequence of records containing the name 'firstname'.
+        /// </summary>
+        /// <param name="firstName">Search key.</param>
+        /// <returns>A sequence of records containing the name 'firstname'.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when firstname length less than 2 or more than 60.</exception>
+        public ReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
         {
             if (firstName is null)
             {
                 throw new ArgumentNullException($"{nameof(firstName)} is null");
             }
 
-            string trimmedFirsName = firstName.Trim();
-
-            if (trimmedFirsName.Length < 2 || trimmedFirsName.Length > 60)
+            if (firstName.Length < 2 || firstName.Length > 60)
             {
                 throw new ArgumentException($"{nameof(firstName)}.Length should be from 2 to 60. {nameof(firstName)} should not consist only of white-spaces characters");
             }
 
+            return GetRecordsFromDictionary(firstName, this.firstNameDictionary);
+        }
+
+        /// <summary>
+        /// Returns a sequence of records containing the name 'firstname'.
+        /// </summary>
+        /// <param name="lastName">Search key.</param>
+        /// <returns>A sequence of records containing the name 'lastName'.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when lastName length less than 2 or more than 60.</exception>
+        public ReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
+        {
             if (lastName is null)
             {
                 throw new ArgumentNullException($"{nameof(lastName)} is null");
             }
 
-            string trimmedLastName = lastName.Trim();
-
-            if (trimmedLastName.Length < 2 || trimmedLastName.Length > 60)
+            if (lastName.Length < 2 || lastName.Length > 60)
             {
                 throw new ArgumentException($"{nameof(lastName)}.Length should be from 2 to 60. {nameof(lastName)} should not consist only of white-spaces characters");
             }
 
-            if (dateOfBirth < new DateTime(1950, 1, 1) || dateOfBirth >= DateTime.Now)
-            {
-                throw new ArgumentException($"{nameof(dateOfBirth)} should be more than 01-Jan-1950 and not more than {DateTime.Now.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} or invalid date format input");
-            }
-
-            if (zipCode < 1 || zipCode > 9999)
-            {
-                throw new ArgumentOutOfRangeException($"{nameof(zipCode)} range is 1..9999");
-            }
-
-            if (city is null)
-            {
-                throw new ArgumentNullException($"{nameof(city)} is null");
-            }
-
-            string trimmedCity = city.Trim();
-
-            if (trimmedCity.Length < 2 || trimmedCity.Length > 60)
-            {
-                throw new ArgumentException($"{nameof(city)}.Length should be from 2 to 60. {nameof(city)} should not consist only of white-spaces characters");
-            }
-
-            if (street is null)
-            {
-                throw new ArgumentNullException($"{nameof(street)} is null");
-            }
-
-            string trimmedStreet = street.Trim();
-
-            if (trimmedStreet.Length < 2 || trimmedStreet.Length > 60)
-            {
-                throw new ArgumentException($"{nameof(street)}.Length should be from 2 to 60. {nameof(street)} should not consist only of white-spaces characters");
-            }
-
-            if (salary < 0 || salary > 100000)
-            {
-                throw new ArgumentOutOfRangeException($"{nameof(salary)} range is 0..100 000");
-            }
-
-            if (gender != 'm' && gender != 'M' && gender != 'f' && gender != 'F')
-            {
-                throw new ArgumentException($"{nameof(gender)} permissible values are :'m', 'M', 'f', 'F'.");
-            }
+            return GetRecordsFromDictionary(lastName, this.lastNameDictionary);
         }
 
-        private FileCabinetRecord[] GetRecordsFromDictionary(string key, Dictionary<string, List<FileCabinetRecord>> dictionary)
+        /// <summary>
+        /// Returns a sequence of records containing the date 'dateOfBirth'.
+        /// </summary>
+        /// <param name="dateOfBirth">Search key.</param>
+        /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
+        /// <exception cref="ArgumentException">Thrown when dateOfBirth is less than 01-Jan-1950 and more than now.</exception>
+        public ReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth) => GetRecordsFromDictionary(dateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), this.dateOfBirthDictionary);
+
+        /// <summary>
+        /// Кeturns an array of all records.
+        /// </summary>
+        /// <returns>An array of all records.</returns>
+        public ReadOnlyCollection<FileCabinetRecord> GetRecords()
+        {
+            return new ReadOnlyCollection<FileCabinetRecord>(this.list);
+        }
+
+        /// <summary>
+        /// Returns records count.
+        /// </summary>
+        /// <returns>Records count.</returns>
+        public int GetStat()
+        {
+            return this.list.Count;
+        }
+
+        private static ReadOnlyCollection<FileCabinetRecord> GetRecordsFromDictionary(string key, Dictionary<string, List<FileCabinetRecord>> dictionary)
         {
             List<FileCabinetRecord> valuesList;
             dictionary.TryGetValue(key.ToUpperInvariant(), out valuesList);
-            return (valuesList is null) ? Array.Empty<FileCabinetRecord>() : valuesList.ToArray();
+            ReadOnlyCollection<FileCabinetRecord> reaOnlyCollection;
+            reaOnlyCollection = (valuesList is null) ? new ReadOnlyCollection<FileCabinetRecord>(new List<FileCabinetRecord>()) : new ReadOnlyCollection<FileCabinetRecord>(valuesList);
+            return reaOnlyCollection;
         }
 
-        private void EditRecordInDictionary(string oldName, string newName, int id, FileCabinetRecord record, Dictionary<string, List<FileCabinetRecord>> dictionary)
+        private static void EditRecordInDictionary(string oldName, string newName, int id, FileCabinetRecord record, Dictionary<string, List<FileCabinetRecord>> dictionary)
         {
             List<FileCabinetRecord> valuesList;
             if (oldName.Equals(newName, StringComparison.InvariantCultureIgnoreCase))
@@ -183,7 +221,7 @@ namespace FileCabinetApp
             }
         }
 
-        private void AddRecordToDictionary(string name, FileCabinetRecord record, Dictionary<string, List<FileCabinetRecord>> dictionary)
+        private static void AddRecordToDictionary(string name, FileCabinetRecord record, Dictionary<string, List<FileCabinetRecord>> dictionary)
         {
             List<FileCabinetRecord> valuesList;
             if (dictionary.TryGetValue(name.ToUpperInvariant(), out valuesList))
