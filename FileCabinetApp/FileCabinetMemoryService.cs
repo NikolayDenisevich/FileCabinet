@@ -32,6 +32,24 @@ namespace FileCabinetApp
         }
 
         /// <summary>
+        /// Removes specified record.
+        /// </summary>
+        /// <param name="recordId">Record Id.</param>
+        public void Remove(int recordId)
+        {
+            FileCabinetRecord record = this.list.Find(r => r.Id == recordId);
+            if (record is null)
+            {
+                throw new ArgumentException($"There is no record #{recordId} in the list.");
+            }
+
+            this.list.Remove(record);
+            this.RemoveRecordFromDictionary(recordId, record.FirstName, record, this.firstNameDictionary);
+            this.RemoveRecordFromDictionary(recordId, record.LastName, record, this.lastNameDictionary);
+            this.RemoveRecordFromDictionary(recordId, record.DateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), record, this.dateOfBirthDictionary);
+        }
+
+        /// <summary>
         /// Creates the FileCabinetServiceSnapshot instance.
         /// </summary>
         /// <param name="records">The records collection for export.</param>
@@ -237,9 +255,19 @@ namespace FileCabinetApp
         /// Returns records count.
         /// </summary>
         /// <returns>Records count.</returns>
-        public int GetStat()
+        public (int, int) GetStat()
         {
-            return this.list.Count;
+            return (this.list.Count, 0);
+        }
+
+        /// <summary>
+        /// Pugres the data file.
+        /// </summary>
+        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
+        public (int, int) Purge()
+        {
+            Console.WriteLine("You can use this command only for filesystem storage case.");
+            return (-1, -1);
         }
 
         private static ReadOnlyCollection<FileCabinetRecord> GetRecordsFromDictionary(string key, Dictionary<string, List<FileCabinetRecord>> dictionary)
@@ -251,7 +279,7 @@ namespace FileCabinetApp
             return reaOnlyCollection;
         }
 
-        private static void EditRecordInDictionary(string oldName, string newName, int id, FileCabinetRecord record, Dictionary<string, List<FileCabinetRecord>> dictionary)
+        private static void EditRecordInDictionary(string oldName, string newName, int id, FileCabinetRecord newRecord, Dictionary<string, List<FileCabinetRecord>> dictionary)
         {
             List<FileCabinetRecord> valuesList;
             if (!oldName.Equals(newName, StringComparison.InvariantCultureIgnoreCase))
@@ -266,12 +294,12 @@ namespace FileCabinetApp
 
                 if (dictionary.TryGetValue(newName.ToUpperInvariant(), out valuesList))
                 {
-                    valuesList.Add(record);
+                    valuesList.Add(newRecord);
                 }
                 else
                 {
                     valuesList = new List<FileCabinetRecord>();
-                    valuesList.Add(record);
+                    valuesList.Add(newRecord);
                     dictionary.Add(newName.ToUpperInvariant(), valuesList);
                 }
             }
@@ -326,6 +354,17 @@ namespace FileCabinetApp
         private int GetLastRecordId()
         {
             return this.list[this.list.Count - 1].Id;
+        }
+
+        private void RemoveRecordFromDictionary(int recordId, string keyName, FileCabinetRecord recordToRemove, Dictionary<string, List<FileCabinetRecord>> dictionary)
+        {
+            List<FileCabinetRecord> valuesList;
+            _ = dictionary.TryGetValue(keyName.ToUpperInvariant(), out valuesList);
+            valuesList.Remove(recordToRemove);
+            if (valuesList.Count is 0)
+            {
+                _ = dictionary.Remove(keyName.ToUpperInvariant(), out _);
+            }
         }
     }
 }

@@ -34,7 +34,7 @@ namespace FileCabinetApp
         /// Returns records quantity.
         /// </summary>
         /// <returns>records quantity.</returns>
-        public int GetStat();
+        public (int, int) GetStat();
 
         /// <summary>
         /// Returns records collection that contains records with the specified firstname.
@@ -70,5 +70,17 @@ namespace FileCabinetApp
         /// <param name="snapshot">FileCabinetServiceSnapshot instance.</param>
         /// <returns>Restored records count.</returns>
         public int Restore(FileCabinetServiceSnapshot snapshot);
+
+        /// <summary>
+        /// Removes specified record.
+        /// </summary>
+        /// <param name="recordId">Record Id.</param>
+        public void Remove(int recordId);
+
+        /// <summary>
+        /// Pugres the data file.
+        /// </summary>
+        /// <returns>Item1 is purged items count. Item2 total items before purge.</returns>
+        public (int, int) Purge();
     }
 }
