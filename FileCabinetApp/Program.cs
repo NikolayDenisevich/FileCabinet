@@ -67,9 +67,7 @@ namespace FileCabinetApp
             const string CustomServerValidationType = "custom";
             if (args is null || args.Length == 0)
             {
-                fileCabinetService = CreateFileCabinetMemoryServiceInstance(DefaultServerValidationType); // TODO:
-
-                // CreateFileCabinetFileSystemServiceInstance();
+                fileCabinetService = CreateFileCabinetMemoryServiceInstance(DefaultServerValidationType);
             }
             else
             {

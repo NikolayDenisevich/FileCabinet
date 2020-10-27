@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace FileCabinetApp
 {
@@ -41,21 +40,21 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="firstName">The specified firstname.</param>
         /// <returns>Records collection.</returns>
-        public IReadOnlyCollection<TRecord> FindByFirstName(string firstName);
+        public IEnumerable<TRecord> FindByFirstName(string firstName);
 
         /// <summary>
         /// Returns records collection that contains records with the specified lastName.
         /// </summary>
         /// <param name="lastName">The specified lastName.</param>
         /// <returns>Records collection.</returns>
-        public IReadOnlyCollection<TRecord> FindByLastName(string lastName);
+        public IEnumerable<TRecord> FindByLastName(string lastName);
 
         /// <summary>
         /// Returns records collection that contains records with the specified date of birth.
         /// </summary>
         /// <param name="dateOfBirth">The specified date of birth.</param>
         /// <returns>Records collection.</returns>
-        public IReadOnlyCollection<TRecord> FindByDateOfBirth(DateTime dateOfBirth);
+        public IEnumerable<TRecord> FindByDateOfBirth(DateTime dateOfBirth);
 
         /// <summary>
         /// Creates the FileCabinetServiceSnapshot instance.

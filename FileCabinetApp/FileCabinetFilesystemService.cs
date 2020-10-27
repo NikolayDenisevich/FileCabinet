@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace FileCabinetApp
@@ -14,14 +14,17 @@ namespace FileCabinetApp
         private const int StringValuesLengthInBytes = 120;
         private const int BytesInOneUnicodeSymbol = 2;
         private const int OneRecordFullLengthInBytes = 518;
-        private const int DateOfBirthOffset = 246;
-        private const int FirstNameOffset = 6;
-        private const int LastNameOffset = 126;
         private const short DeleteMask = 4;
-        private const string StatePath = @"C:\Cabinet\state.bin";
-        private const string DefaultBinaryFilePath = @"C:\Cabinet\cabinet-records.db";
         private readonly FileStream fileStream;
         private readonly IRecordValidator<RecordArguments> validator;
+
+#pragma warning disable SA1305 // Field names should not use Hungarian notation
+        private readonly Dictionary<int, long> idIndexer = new Dictionary<int, long>();
+#pragma warning restore SA1305 // Field names should not use Hungarian notation
+        private readonly Dictionary<string, List<long>> firstNameIndexer = new Dictionary<string, List<long>>();
+        private readonly Dictionary<string, List<long>> lastNameIndexer = new Dictionary<string, List<long>>();
+        private readonly Dictionary<string, List<long>> dateOfBirthIndexer = new Dictionary<string, List<long>>();
+
         private int currentRecordsCount;
         private int maxId;
         private int deletedRecordsCount;
@@ -34,19 +37,9 @@ namespace FileCabinetApp
         /// <param name="fileStream">File stream for working with data file.</param>
         public FileCabinetFilesystemService(IRecordValidator<RecordArguments> validator, FileStream fileStream)
         {
-            if (validator is null)
-            {
-                throw new ArgumentNullException($"{nameof(validator)} is null");
-            }
-
-            if (fileStream is null)
-            {
-                throw new ArgumentNullException($"{nameof(fileStream)} is null");
-            }
-
-            this.validator = validator;
-            this.fileStream = fileStream;
-            this.RestoreState();
+            this.validator = validator ?? throw new ArgumentNullException($"{nameof(validator)} is null");
+            this.fileStream = fileStream ?? throw new ArgumentNullException($"{nameof(fileStream)} is null");
+            this.InintializeService();
         }
 
         /// <summary>
@@ -57,11 +50,7 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when records is null.</exception>
         public FileCabinetServiceSnapshot MakeSnapshot(IReadOnlyCollection<FileCabinetRecord> records)
         {
-            if (records is null)
-            {
-                throw new ArgumentNullException($"{nameof(records)} is null");
-            }
-
+            records = records ?? throw new ArgumentNullException($"{nameof(records)} is null");
             return new FileCabinetServiceSnapshot(records);
         }
 
@@ -72,30 +61,19 @@ namespace FileCabinetApp
         public (int, int) Purge()
         {
             int totalRecordsCount = (int)(this.fileStream.Length / OneRecordFullLengthInBytes);
-            (int, int) returnedValue;
+            (int, int) valueToReturn;
             if (this.deletedRecordsCount > 0)
             {
                 var notMarkedRecords = this.GetRecords();
-                using (BinaryWriter writer = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
-                {
-                    writer.Seek(0, SeekOrigin.Begin);
-                    foreach (var item in notMarkedRecords)
-                    {
-                        this.WriteRecord(item, writer);
-                    }
-
-                    this.fileStream.SetLength(OneRecordFullLengthInBytes * notMarkedRecords.Count);
-                }
-
-                returnedValue = (this.deletedRecordsCount, totalRecordsCount);
-                this.deletedRecordsCount = 0;
+                valueToReturn = (this.deletedRecordsCount, totalRecordsCount);
+                this.ReinitializeServiceThroughWritingRecordsCollection(notMarkedRecords);
             }
             else
             {
-                returnedValue = (-1, -1);
+                valueToReturn = (-1, -1);
             }
 
-            return returnedValue;
+            return valueToReturn;
         }
 
         /// <summary>
@@ -106,11 +84,7 @@ namespace FileCabinetApp
         /// <returns>Restored records count.</returns>
         public int Restore(FileCabinetServiceSnapshot snapshot)
         {
-            if (snapshot is null)
-            {
-                throw new ArgumentNullException($"{nameof(snapshot)} is null");
-            }
-
+            snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)} is null");
             int validRecordsCount = 0;
             IReadOnlyCollection<FileCabinetRecord> records = snapshot.Records;
 
@@ -140,7 +114,6 @@ namespace FileCabinetApp
                 }
 
                 long foundRecordPosition = this.FindRecordPosition(newItem.Id);
-
                 if (foundRecordPosition is -1)
                 {
                     this.isRecordReadedFromImportedFile = true;
@@ -171,15 +144,12 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentOutOfRangeException">Arguments.Salary range is 0..100 000.</exception>
         public int CreateRecord(RecordArguments arguments)
         {
-            if (arguments is null)
-            {
-                throw new ArgumentNullException($"{nameof(arguments)} is null");
-            }
-
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
             this.validator.ValidateArguments(arguments);
             using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
             {
-                binaryWriter.Seek(sizeof(short), SeekOrigin.End);
+                binaryWriter.Seek(0, SeekOrigin.End);
+                long currentRecordStartPosition = this.fileStream.Position;
                 if (!this.isRecordReadedFromImportedFile)
                 {
                     arguments.Id = ++this.maxId;
@@ -193,12 +163,16 @@ namespace FileCabinetApp
                         this.maxId = arguments.Id;
                     }
                 }
+
+                string stringDate = $"{arguments.DateOfBirth.Year}/{arguments.DateOfBirth.Month}/{arguments.DateOfBirth.Day}";
+                this.AddRecordToIndexer(currentRecordStartPosition, arguments.Id, this.idIndexer);
+                AddRecordToIndexer(currentRecordStartPosition, arguments.FirstName.ToUpperInvariant(), this.firstNameIndexer);
+                AddRecordToIndexer(currentRecordStartPosition, arguments.LastName.ToUpperInvariant(), this.lastNameIndexer);
+                AddRecordToIndexer(currentRecordStartPosition, stringDate, this.dateOfBirthIndexer);
             }
 
             this.isRecordReadedFromImportedFile = default;
             this.currentRecordsCount++;
-            var lastWriteTime = DateTime.Now;
-            this.SaveState(lastWriteTime);
             return this.maxId;
         }
 
@@ -207,22 +181,11 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="arguments">File cabinet record arguments.</param>
         /// <exception cref="ArgumentNullException">Thrown when 'arguments' is null.</exception>
-        /// <exception cref="ArgumentNullException">Thrown when arguments.Firstname, or arguments.Lastname, or arguments.City, or arguments.Street is null.</exception>
-        /// <exception cref="ArgumentException">Thrown when arguments.Firstname, or arguments.Lsatname, or arguments.City, or arguments.Street trimmed length less than 2 or more than 60.</exception>
-        /// <exception cref="ArgumentException">Thrown when arguments.DateOfBirth is less than 01-Jan-1950 and more than now.</exception>
-        /// <exception cref="ArgumentException">For parameter arguments.Gender permissible values are :'m', 'M', 'f', 'F'.</exception>
         /// <exception cref="ArgumentException">There is no record #{arguments.Id} in the list.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Arguments.ZipCode range is 1..9999.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Arguments.Salary range is 0..100 000.</exception>
         public void EditRecord(RecordArguments arguments)
         {
-            if (arguments is null)
-            {
-                throw new ArgumentNullException($"{nameof(arguments)} is null");
-            }
-
+            arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)} is null");
             long foundRecordPosition = this.FindRecordPosition(arguments.Id);
-
             if (foundRecordPosition is -1)
             {
                 throw new ArgumentException($"There is no record #{arguments.Id} in the file.");
@@ -244,18 +207,9 @@ namespace FileCabinetApp
             }
 
             this.SetRecordStatusDelete(recordPosition);
-
-            (int, int, int) currentState;
-            if (recordId == this.maxId)
-            {
-                currentState = this.GetActualStateFromFile();
-                this.maxId = currentState.Item2;
-            }
-
+            this.RemoveFromIndexers(recordPosition);
             this.currentRecordsCount--;
             this.deletedRecordsCount++;
-            var lastWriteTime = DateTime.Now;
-            this.SaveState(lastWriteTime);
         }
 
         /// <summary>
@@ -264,33 +218,10 @@ namespace FileCabinetApp
         /// <param name="dateOfBirth">Search key.</param>
         /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
         /// <exception cref="ArgumentException">Thrown when dateOfBirth is less than 01-Jan-1950 and more than now.</exception>
-        public IReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
+        public IEnumerable<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth)
         {
-            var list = new List<FileCabinetRecord>();
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
-            {
-                long recordsCount = this.fileStream.Length / OneRecordFullLengthInBytes;
-                for (int i = 0; i < recordsCount; i++)
-                {
-                    this.fileStream.Seek(i * OneRecordFullLengthInBytes, SeekOrigin.Begin);
-                    short status = reader.ReadInt16();
-                    if ((status &= DeleteMask) != DeleteMask)
-                    {
-                        this.fileStream.Seek(DateOfBirthOffset + (i * OneRecordFullLengthInBytes), SeekOrigin.Begin);
-                        int currentYear = reader.ReadInt32();
-                        int currentMonth = reader.ReadInt32();
-                        int currentDay = reader.ReadInt32();
-
-                        if (currentYear == dateOfBirth.Year && currentMonth == dateOfBirth.Month && currentDay == dateOfBirth.Day)
-                        {
-                            FileCabinetRecord record = this.ReadRecordFromFile(reader, i * OneRecordFullLengthInBytes);
-                            list.Add(record);
-                        }
-                    }
-                }
-            }
-
-            return new ReadOnlyCollection<FileCabinetRecord>(list);
+            string stringDate = $"{dateOfBirth.Year}/{dateOfBirth.Month}/{dateOfBirth.Day}";
+            return this.FindRecordsByKeyInIndexer(stringDate, this.dateOfBirthIndexer);
         }
 
         /// <summary>
@@ -300,11 +231,10 @@ namespace FileCabinetApp
         /// <returns>A sequence of records containing the name 'firstname'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
         /// <exception cref="ArgumentException">Thrown when firstname length less than 2 or more than 60.</exception>
-        public IReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
+        public IEnumerable<FileCabinetRecord> FindByFirstName(string firstName)
         {
-            List<FileCabinetRecord> list = this.CreateRecordsByNamesCollection(firstName, FirstNameOffset);
-
-            return new ReadOnlyCollection<FileCabinetRecord>(list);
+            firstName = firstName ?? throw new ArgumentNullException($"{nameof(firstName)} is null");
+            return this.FindRecordsByKeyInIndexer(firstName, this.firstNameIndexer);
         }
 
         /// <summary>
@@ -314,11 +244,10 @@ namespace FileCabinetApp
         /// <returns>A sequence of records containing the name 'lastName'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
         /// <exception cref="ArgumentException">Thrown when lastName length less than 2 or more than 60.</exception>
-        public IReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
+        public IEnumerable<FileCabinetRecord> FindByLastName(string lastName)
         {
-            List<FileCabinetRecord> list = this.CreateRecordsByNamesCollection(lastName, LastNameOffset);
-
-            return new ReadOnlyCollection<FileCabinetRecord>(list);
+            lastName = lastName ?? throw new ArgumentNullException($"{nameof(lastName)} is null");
+            return this.FindRecordsByKeyInIndexer(lastName, this.lastNameIndexer);
         }
 
         /// <summary>
@@ -327,29 +256,15 @@ namespace FileCabinetApp
         /// <returns>The collection of all records.</returns>
         public IReadOnlyCollection<FileCabinetRecord> GetRecords()
         {
-            var list = new List<FileCabinetRecord>();
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
+            var recordsList = new List<FileCabinetRecord>();
+            using BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
+            foreach (var keyValuePair in this.idIndexer)
             {
-                int recordsCounter = 0;
-                int factor = 0;
-                this.fileStream.Seek(factor, SeekOrigin.Begin);
-                while (reader.PeekChar() != -1)
-                {
-                    short status = reader.ReadInt16();
-                    if ((status &= DeleteMask) != DeleteMask)
-                    {
-                        FileCabinetRecord record = this.ReadRecordFromFile(reader, factor * OneRecordFullLengthInBytes);
-                        list.Add(record);
-                        recordsCounter++;
-                    }
-
-                    this.fileStream.Seek(++factor * OneRecordFullLengthInBytes, SeekOrigin.Begin);
-                }
-
-                reader.Close();
+                FileCabinetRecord record = this.ReadRecordFromFile(reader, keyValuePair.Value);
+                recordsList.Add(record);
             }
 
-            return new ReadOnlyCollection<FileCabinetRecord>(list);
+            return recordsList;
         }
 
         /// <summary>
@@ -366,6 +281,86 @@ namespace FileCabinetApp
             int bytesToNextRecord = StringValuesLengthInBytes - ((value.Length * BytesInOneUnicodeSymbol) + 1);
             byte[] bytes = new byte[bytesToNextRecord];
             binaryWriter.Write(bytes);
+        }
+
+        private static void EditRecordInDictionary(string oldKey, string newKey, long recordPosition, Dictionary<string, List<long>> indexer)
+        {
+            oldKey = oldKey.ToUpperInvariant();
+            newKey = newKey.ToUpperInvariant();
+            List<long> positionsList;
+            if (!oldKey.Equals(newKey, StringComparison.InvariantCultureIgnoreCase))
+            {
+                indexer.TryGetValue(oldKey, out positionsList);
+
+                if (positionsList.Count is 1)
+                {
+                    indexer.Remove(oldKey, out positionsList);
+                }
+                else
+                {
+                    positionsList.Remove(recordPosition);
+                }
+
+                if (indexer.TryGetValue(newKey, out positionsList))
+                {
+                    positionsList.Add(recordPosition);
+                }
+                else
+                {
+                    positionsList = new List<long>();
+                    positionsList.Add(recordPosition);
+                    indexer.Add(newKey, positionsList);
+                }
+            }
+        }
+
+        private static void AddRecordToIndexer(long currentRecordStartPosition, string parameter, Dictionary<string, List<long>> indexer)
+        {
+            parameter = parameter.ToUpperInvariant();
+            bool isExistKey = indexer.TryGetValue(parameter, out List<long> valueList);
+            if (isExistKey)
+            {
+                valueList.Add(currentRecordStartPosition);
+            }
+            else
+            {
+                indexer.Add(parameter, new List<long>() { currentRecordStartPosition });
+            }
+        }
+
+        private static void RemoveRecordFromIndexer(string key, long recordPosition, Dictionary<string, List<long>> indexer)
+        {
+            key = key.ToUpperInvariant();
+            List<long> recordsPositions;
+            _ = indexer.TryGetValue(key, out recordsPositions);
+            if (recordsPositions.Count is 1)
+            {
+                _ = indexer.Remove(key, out _);
+            }
+            else
+            {
+                recordsPositions.Remove(recordPosition);
+            }
+        }
+
+        private static void WriteRecord(FileCabinetRecord record, BinaryWriter binaryWriter)
+        {
+            binaryWriter.Write((short)0);
+            binaryWriter.Write(record.Id);
+            binaryWriter.Write(record.FirstName);
+            WriteEmptyBytesFromEndOfStringValue(record.FirstName, binaryWriter);
+            binaryWriter.Write(record.LastName);
+            WriteEmptyBytesFromEndOfStringValue(record.LastName, binaryWriter);
+            binaryWriter.Write(record.DateOfBirth.Year);
+            binaryWriter.Write(record.DateOfBirth.Month);
+            binaryWriter.Write(record.DateOfBirth.Day);
+            binaryWriter.Write(record.ZipCode);
+            binaryWriter.Write(record.City);
+            WriteEmptyBytesFromEndOfStringValue(record.City, binaryWriter);
+            binaryWriter.Write(record.Street);
+            WriteEmptyBytesFromEndOfStringValue(record.Street, binaryWriter);
+            binaryWriter.Write(record.Salary);
+            binaryWriter.Write(record.Gender);
         }
 
         private FileCabinetRecord ReadRecordFromFile(BinaryReader reader, long fileStreamPosition)
@@ -395,6 +390,7 @@ namespace FileCabinetApp
 
         private void WriteArguments(RecordArguments arguments, BinaryWriter binaryWriter)
         {
+            binaryWriter.Write((short)0);
             binaryWriter.Write(arguments.Id);
             binaryWriter.Write(arguments.FirstName);
             this.MoveStreamToNextPositionAfterString(arguments.FirstName);
@@ -420,199 +416,148 @@ namespace FileCabinetApp
 
         private long FindRecordPosition(int id)
         {
-            long recordsCount = this.fileStream.Length / OneRecordFullLengthInBytes;
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
+            bool isFound = this.idIndexer.TryGetValue(id, out long position);
+            if (isFound)
             {
-                for (int i = 0; i < recordsCount; i++)
-                {
-                    this.fileStream.Seek(i * OneRecordFullLengthInBytes, SeekOrigin.Begin);
-                    short status = reader.ReadInt16();
-                    if ((status &= DeleteMask) != DeleteMask)
-                    {
-                        int currentId = reader.ReadInt32();
-                        if (currentId == id)
-                        {
-                            reader.Close();
-                            return this.fileStream.Position - sizeof(int) - sizeof(short);
-                        }
-                    }
-                }
+                return position;
             }
 
             return -1;
         }
 
-        private List<FileCabinetRecord> CreateRecordsByNamesCollection(string name, int nameOffset)
+        private void InintializeService()
         {
-            var list = new List<FileCabinetRecord>();
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
-            {
-                long recordsCount = this.fileStream.Length / OneRecordFullLengthInBytes;
-                for (int i = 0; i < recordsCount; i++)
-                {
-                    this.fileStream.Seek(i * OneRecordFullLengthInBytes, SeekOrigin.Begin);
-                    short status = reader.ReadInt16();
-                    if ((status &= DeleteMask) != DeleteMask)
-                    {
-                        this.fileStream.Seek(nameOffset + (i * OneRecordFullLengthInBytes), SeekOrigin.Begin);
-                        string currentFirstName = reader.ReadString();
-
-                        if (currentFirstName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            FileCabinetRecord record = this.ReadRecordFromFile(reader, i * OneRecordFullLengthInBytes);
-                            list.Add(record);
-                        }
-                    }
-                }
-            }
-
-            return list;
-        }
-
-        private FileCabinetRecord ReadRecordById(int id)
-        {
-            long foundRecordPosition = this.FindRecordPosition(id);
-
-            if (foundRecordPosition is -1)
-            {
-                return default;
-            }
-
-            FileCabinetRecord record;
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
-            {
-                record = this.ReadRecordFromFile(reader, foundRecordPosition);
-            }
-
-            return record;
-        }
-
-        /// <summary>
-        /// Returns current records count(Item1), max(Id)(Item2), removed records count (Item3).
-        /// </summary>
-        /// <returns>Item1 is current records count. Item2 is max(Id). Item3 is removed records count.</returns>
-        private (int, int, int) GetActualStateFromFile()
-        {
-            int maxId = 0;
-            int recordsCount = 0;
-            int deletedCount = 0;
             int factor = 0;
-            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
+            using BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
+            this.fileStream.Seek(factor, SeekOrigin.Begin);
+            while (reader.PeekChar() != -1)
             {
-                this.fileStream.Seek(factor, SeekOrigin.Begin);
-                if (reader.PeekChar() == -1)
+                long currentRecordStartPosition = OneRecordFullLengthInBytes * factor;
+                this.fileStream.Seek(currentRecordStartPosition, SeekOrigin.Begin);
+                short status = reader.ReadInt16();
+                status &= DeleteMask;
+                if (status != DeleteMask)
                 {
-                    return (recordsCount, maxId, deletedCount);
+                    this.AddToIndexersFirstFourFields(reader, currentRecordStartPosition);
+                    this.currentRecordsCount++;
+                }
+                else
+                {
+                    this.deletedRecordsCount++;
                 }
 
-                while (reader.PeekChar() != -1)
+                this.fileStream.Seek(OneRecordFullLengthInBytes * ++factor, SeekOrigin.Begin);
+            }
+        }
+
+        private void ReinitializeServiceThroughWritingRecordsCollection(IReadOnlyCollection<FileCabinetRecord> notMarkedRecords)
+        {
+            this.idIndexer.Clear();
+            this.firstNameIndexer.Clear();
+            this.lastNameIndexer.Clear();
+            this.dateOfBirthIndexer.Clear();
+            this.deletedRecordsCount = 0;
+            this.currentRecordsCount = 0;
+
+            using (BinaryWriter writer = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
+            {
+                writer.Seek(0, SeekOrigin.Begin);
+                foreach (var record in notMarkedRecords)
                 {
-                    this.fileStream.Seek(OneRecordFullLengthInBytes * factor, SeekOrigin.Begin);
-                    short status = reader.ReadInt16();
-                    status &= DeleteMask;
-                    if (status != DeleteMask)
-                    {
-                        int currentId = reader.ReadInt32();
-                        if (currentId > maxId)
-                        {
-                            maxId = currentId;
-                        }
+                    this.currentRecordsCount++;
+                    this.AddRecordToIndexer(this.fileStream.Position, record.Id, this.idIndexer);
+                    AddRecordToIndexer(this.fileStream.Position, record.FirstName, this.firstNameIndexer);
+                    AddRecordToIndexer(this.fileStream.Position, record.LastName, this.lastNameIndexer);
+                    string stringDate = $"{record.DateOfBirth.Year}/{record.DateOfBirth.Month}/{record.DateOfBirth.Day}";
+                    AddRecordToIndexer(this.fileStream.Position, stringDate, this.dateOfBirthIndexer);
 
-                        recordsCount++;
-                    }
-                    else
-                    {
-                        deletedCount++;
-                    }
-
-                    this.fileStream.Seek(OneRecordFullLengthInBytes * ++factor, SeekOrigin.Begin);
+                    WriteRecord(record, writer);
                 }
+
+                this.fileStream.SetLength(OneRecordFullLengthInBytes * notMarkedRecords.Count);
+            }
+        }
+
+        private void AddToIndexersFirstFourFields(BinaryReader reader, long currentRecordStartPosition)
+        {
+            this.fileStream.Seek(currentRecordStartPosition, SeekOrigin.Begin);
+            var currentRecordValues = this.ReadRecordFirstFourFields(reader);
+            string currentDateOfBirth = $"{currentRecordValues.DateOfBirth.Year}/{currentRecordValues.DateOfBirth.Month}/{currentRecordValues.DateOfBirth.Day}";
+
+            this.AddRecordToIndexer(currentRecordStartPosition, currentRecordValues.Id, this.idIndexer);
+            AddRecordToIndexer(currentRecordStartPosition, currentRecordValues.FirstName, this.firstNameIndexer);
+            AddRecordToIndexer(currentRecordStartPosition, currentRecordValues.LastName, this.lastNameIndexer);
+            AddRecordToIndexer(currentRecordStartPosition, currentDateOfBirth, this.dateOfBirthIndexer);
+        }
+
+        private void RemoveFromIndexers(long currentRecordStartPosition)
+        {
+            using var reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
+            this.fileStream.Seek(currentRecordStartPosition, SeekOrigin.Begin);
+            var recordToRemove = this.ReadRecordFirstFourFields(reader);
+            this.RemoveRecordFromIndexer(recordToRemove.Id, this.idIndexer);
+            RemoveRecordFromIndexer(recordToRemove.FirstName, currentRecordStartPosition, this.firstNameIndexer);
+            RemoveRecordFromIndexer(recordToRemove.LastName, currentRecordStartPosition, this.lastNameIndexer);
+            string dateOfBirthToRemove = $"{recordToRemove.DateOfBirth.Year}/{recordToRemove.DateOfBirth.Month}/{recordToRemove.DateOfBirth.Day}";
+            RemoveRecordFromIndexer(dateOfBirthToRemove, currentRecordStartPosition, this.dateOfBirthIndexer);
+        }
+
+        private void RemoveRecordFromIndexer(int key, Dictionary<int, long> indexer)
+        {
+            indexer.Remove(key);
+            if (key == this.maxId)
+            {
+                this.maxId = this.idIndexer.Keys.Max();
+            }
+        }
+
+        private void AddRecordToIndexer(long currentRecordStartPosition, int currentId, Dictionary<int, long> idsIndexer)
+        {
+            if (currentId > this.maxId)
+            {
+                this.maxId = currentId;
             }
 
-            return (recordsCount, maxId, deletedCount);
+            bool isExistKey = idsIndexer.TryGetValue(currentId, out long value);
+            if (!isExistKey)
+            {
+                idsIndexer.Add(currentId, currentRecordStartPosition);
+            }
         }
 
         private void EditExistingRecord(RecordArguments arguments, long recordPosition)
         {
-            using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
+            FileCabinetRecord oldRecordValues;
+            using (BinaryReader reader = new BinaryReader(this.fileStream, Encoding.Unicode, true))
             {
-                this.fileStream.Seek(sizeof(short) + recordPosition, SeekOrigin.Begin);
-                this.WriteArguments(arguments, binaryWriter);
-                binaryWriter.Close();
+                this.fileStream.Seek(recordPosition, SeekOrigin.Begin);
+                oldRecordValues = this.ReadRecordFirstFourFields(reader);
             }
+
+            using BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true);
+            this.fileStream.Seek(recordPosition, SeekOrigin.Begin);
+            this.WriteArguments(arguments, binaryWriter);
+            EditRecordInDictionary(oldRecordValues.FirstName, arguments.FirstName, recordPosition, this.firstNameIndexer);
+            EditRecordInDictionary(oldRecordValues.LastName, arguments.LastName, recordPosition, this.lastNameIndexer);
+            string oldDateOfBirth = $"{oldRecordValues.DateOfBirth.Year}/{oldRecordValues.DateOfBirth.Month}/{oldRecordValues.DateOfBirth.Day}";
+            string newDateOfBirth = $"{arguments.DateOfBirth.Year}/{arguments.DateOfBirth.Month}/{arguments.DateOfBirth.Day}";
+            EditRecordInDictionary(oldDateOfBirth, newDateOfBirth, recordPosition, this.dateOfBirthIndexer);
         }
 
-        private void SaveState(DateTime lastWrite)
+        private FileCabinetRecord ReadRecordFirstFourFields(BinaryReader reader)
         {
-            FileStream stateStream;
-            if (File.Exists(StatePath))
-            {
-                stateStream = File.Open(StatePath, FileMode.Open, FileAccess.Write);
-            }
-            else
-            {
-                stateStream = File.Open(StatePath, FileMode.CreateNew, FileAccess.Write);
-            }
-
-            using (BinaryWriter binaryWriter = new BinaryWriter(stateStream, Encoding.Unicode, false))
-            {
-                binaryWriter.Seek(0, SeekOrigin.Begin);
-                binaryWriter.Write(this.currentRecordsCount);
-                binaryWriter.Write(this.maxId);
-                binaryWriter.Write(lastWrite.Year);
-                binaryWriter.Write(lastWrite.Month);
-                binaryWriter.Write(lastWrite.Day);
-                binaryWriter.Write(lastWrite.Hour);
-                binaryWriter.Write(lastWrite.Minute);
-                binaryWriter.Write(lastWrite.Second);
-                binaryWriter.Write(this.deletedRecordsCount);
-            }
-        }
-
-        private void RestoreState()
-        {
-            FileStream stateStream;
-            if (File.Exists(StatePath))
-            {
-                stateStream = File.Open(StatePath, FileMode.Open, FileAccess.Read);
-                using (BinaryReader binaryReader = new BinaryReader(stateStream, Encoding.Unicode, false))
-                {
-                    stateStream.Seek(0, SeekOrigin.Begin);
-                    int readedRecordsCount = binaryReader.ReadInt32();
-                    int readedLastRecordsId = binaryReader.ReadInt32();
-                    int readedYear = binaryReader.ReadInt32();
-                    int readedMonth = binaryReader.ReadInt32();
-                    int readedDay = binaryReader.ReadInt32();
-                    int readedHour = binaryReader.ReadInt32();
-                    int readedMinute = binaryReader.ReadInt32();
-                    int readedSecond = binaryReader.ReadInt32();
-                    int readedDeletedRecordsCount = binaryReader.ReadInt32();
-                    DateTime readedWriteDate = new DateTime(readedYear, readedMonth, readedDay, readedHour, readedMinute, readedSecond);
-                    DateTime actualWriteDate = File.GetLastWriteTime(DefaultBinaryFilePath);
-                    TimeSpan span = readedWriteDate - actualWriteDate;
-                    if (Math.Abs(span.TotalSeconds) < 3)
-                    {
-                        this.SetFieldsState(readedRecordsCount, readedLastRecordsId, readedDeletedRecordsCount);
-                    }
-                    else
-                    {
-                        var state = this.GetActualStateFromFile();
-                        this.SetFieldsState(state.Item1, state.Item2, state.Item3);
-                    }
-                }
-            }
-            else
-            {
-                var state = this.GetActualStateFromFile();
-                this.SetFieldsState(state.Item1, state.Item2, state.Item3);
-            }
-        }
-
-        private void SetFieldsState(int readedRecordsCount, int readedLastRecordsId, int readedDeletedRecordsCount)
-        {
-            this.currentRecordsCount = readedRecordsCount;
-            this.maxId = readedLastRecordsId;
-            this.deletedRecordsCount = readedDeletedRecordsCount;
+            var currentRecord = new FileCabinetRecord();
+            reader.ReadInt16();
+            currentRecord.Id = reader.ReadInt32();
+            currentRecord.FirstName = reader.ReadString().ToUpperInvariant();
+            this.MoveStreamToNextPositionAfterString(currentRecord.FirstName);
+            currentRecord.LastName = reader.ReadString().ToUpperInvariant();
+            this.MoveStreamToNextPositionAfterString(currentRecord.LastName);
+            int year = reader.ReadInt32();
+            int month = reader.ReadInt32();
+            int day = reader.ReadInt32();
+            currentRecord.DateOfBirth = new DateTime(year, month, day);
+            return currentRecord;
         }
 
         private void SetRecordStatusDelete(long recordPosition)
@@ -632,24 +577,19 @@ namespace FileCabinetApp
             }
         }
 
-        private void WriteRecord(FileCabinetRecord record, BinaryWriter binaryWriter)
+        private IEnumerable<FileCabinetRecord> FindRecordsByKeyInIndexer(string key, Dictionary<string, List<long>> indexer)
         {
-            binaryWriter.Write((short)0);
-            binaryWriter.Write(record.Id);
-            binaryWriter.Write(record.FirstName);
-            WriteEmptyBytesFromEndOfStringValue(record.FirstName, binaryWriter);
-            binaryWriter.Write(record.LastName);
-            WriteEmptyBytesFromEndOfStringValue(record.LastName, binaryWriter);
-            binaryWriter.Write(record.DateOfBirth.Year);
-            binaryWriter.Write(record.DateOfBirth.Month);
-            binaryWriter.Write(record.DateOfBirth.Day);
-            binaryWriter.Write(record.ZipCode);
-            binaryWriter.Write(record.City);
-            WriteEmptyBytesFromEndOfStringValue(record.City, binaryWriter);
-            binaryWriter.Write(record.Street);
-            WriteEmptyBytesFromEndOfStringValue(record.Street, binaryWriter);
-            binaryWriter.Write(record.Salary);
-            binaryWriter.Write(record.Gender);
+            key = key.ToUpperInvariant();
+            bool isExist = indexer.TryGetValue(key, out List<long> recordsPositions);
+            if (isExist)
+            {
+                using var reader = new BinaryReader(this.fileStream, Encoding.Unicode, true);
+                for (int i = 0; i < recordsPositions.Count; i++)
+                {
+                    FileCabinetRecord record = this.ReadRecordFromFile(reader, recordsPositions[i]);
+                    yield return record;
+                }
+            }
         }
     }
 }

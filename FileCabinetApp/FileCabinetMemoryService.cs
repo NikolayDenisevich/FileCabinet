@@ -149,7 +149,7 @@ namespace FileCabinetApp
         /// <param name="firstName">Search key.</param>
         /// <returns>A sequence of records containing the name 'firstname'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when firstname is null.</exception>
-        public IReadOnlyCollection<FileCabinetRecord> FindByFirstName(string firstName)
+        public IEnumerable<FileCabinetRecord> FindByFirstName(string firstName)
         {
             firstName = firstName ?? throw new ArgumentNullException($"{nameof(firstName)} is null");
             return GetRecordsFromDictionary(firstName, this.firstNameDictionary);
@@ -161,7 +161,7 @@ namespace FileCabinetApp
         /// <param name="lastName">Search key.</param>
         /// <returns>A sequence of records containing the name 'lastName'.</returns>
         /// <exception cref="ArgumentNullException">Thrown when lastName is null.</exception>
-        public IReadOnlyCollection<FileCabinetRecord> FindByLastName(string lastName)
+        public IEnumerable<FileCabinetRecord> FindByLastName(string lastName)
         {
             lastName = lastName ?? throw new ArgumentNullException($"{nameof(lastName)} is null");
             return GetRecordsFromDictionary(lastName, this.lastNameDictionary);
@@ -172,7 +172,7 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="dateOfBirth">Search key.</param>
         /// <returns>A sequence of records containing the date 'dateOfBirth'.</returns>
-        public IReadOnlyCollection<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth) =>
+        public IEnumerable<FileCabinetRecord> FindByDateOfBirth(DateTime dateOfBirth) =>
             GetRecordsFromDictionary(dateOfBirth.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo), this.dateOfBirthDictionary);
 
         /// <summary>
@@ -197,13 +197,19 @@ namespace FileCabinetApp
             return (-1, -1);
         }
 
-        private static ReadOnlyCollection<FileCabinetRecord> GetRecordsFromDictionary(string key, Dictionary<string, List<FileCabinetRecord>> dictionary)
+        private static IEnumerable<FileCabinetRecord> GetRecordsFromDictionary(string key, Dictionary<string, List<FileCabinetRecord>> dictionary)
         {
             List<FileCabinetRecord> valuesList;
             dictionary.TryGetValue(key.ToUpperInvariant(), out valuesList);
-            ReadOnlyCollection<FileCabinetRecord> reaOnlyCollection;
-            reaOnlyCollection = (valuesList is null) ? new ReadOnlyCollection<FileCabinetRecord>(new List<FileCabinetRecord>()) : new ReadOnlyCollection<FileCabinetRecord>(valuesList);
-            return reaOnlyCollection;
+            if (valuesList is null)
+            {
+                yield break;
+            }
+
+            foreach (var item in valuesList)
+            {
+                yield return item;
+            }
         }
 
         private static void EditRecordInDictionary(string oldName, string newName, int id, FileCabinetRecord newRecord, Dictionary<string, List<FileCabinetRecord>> dictionary)

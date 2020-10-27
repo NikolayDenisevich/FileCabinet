@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using FileCabinetApp.Interfaces;
 
 namespace FileCabinetApp.CommandHandlers
 {
@@ -63,12 +64,12 @@ namespace FileCabinetApp.CommandHandlers
             }
             else
             {
-                IReadOnlyCollection<FileCabinetRecord> readonlyCollection = GetByNameCollection(propertyName, value);
-                CheckRecordsForZeroOrShow(readonlyCollection, propertyName, trimmedValue);
+                IEnumerable<FileCabinetRecord> records = GetByNameCollection(propertyName, value);
+                ShowRecords(records, propertyName, trimmedValue);
             }
         }
 
-        private static IReadOnlyCollection<FileCabinetRecord> GetByNameCollection(string propertyName, string value)
+        private static IEnumerable<FileCabinetRecord> GetByNameCollection(string propertyName, string value)
         {
 #pragma warning disable CA1308 // Normalize strings to uppercase
             string propertyInLower = propertyName.ToLowerInvariant();
@@ -96,8 +97,8 @@ namespace FileCabinetApp.CommandHandlers
                     return;
                 }
 
-                IReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByDateOfBirth(dateOfBirth);
-                CheckRecordsForZeroOrShow(readonlyCollection, propertyName, value);
+                IEnumerable<FileCabinetRecord> records = service.FindByDateOfBirth(dateOfBirth);
+                ShowRecords(records, propertyName, value);
             }
             else
             {
@@ -106,9 +107,9 @@ namespace FileCabinetApp.CommandHandlers
             }
         }
 
-        private static void CheckRecordsForZeroOrShow(IReadOnlyCollection<FileCabinetRecord> records, string propertyName, string input)
+        private static void ShowRecords(IEnumerable<FileCabinetRecord> records, string propertyName, string input)
         {
-            if (records.Count == 0 || records is null)
+            if (!records.GetEnumerator().MoveNext())
             {
                 Console.WriteLine($"There is no records with {propertyName} '{input}'");
             }
