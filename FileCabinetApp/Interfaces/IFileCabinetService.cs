@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace FileCabinetApp
@@ -34,5 +35,26 @@ namespace FileCabinetApp
         /// </summary>
         /// <returns>records quantity.</returns>
         public int GetStat();
+
+        /// <summary>
+        /// Returns records collection that contains records with the specified firstname.
+        /// </summary>
+        /// <param name="firstName">The specified firstname.</param>
+        /// <returns>Records collection.</returns>
+        public ReadOnlyCollection<TRecord> FindByFirstName(string firstName);
+
+        /// <summary>
+        /// Returns records collection that contains records with the specified lastName.
+        /// </summary>
+        /// <param name="lastName">The specified lastName.</param>
+        /// <returns>Records collection.</returns>
+        public ReadOnlyCollection<TRecord> FindByLastName(string lastName);
+
+        /// <summary>
+        /// Returns records collection that contains records with the specified date of birth.
+        /// </summary>
+        /// <param name="dateOfBirth">The specified date of birth.</param>
+        /// <returns>Records collection.</returns>
+        public ReadOnlyCollection<TRecord> FindByDateOfBirth(DateTime dateOfBirth);
     }
 }

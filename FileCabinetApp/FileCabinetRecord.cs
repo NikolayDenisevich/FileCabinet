@@ -83,7 +83,7 @@ namespace FileCabinetApp
         /// <inheritdoc/>
         public override string ToString()
         {
-            return $"{this.Id}, {this.FirstName}, {this.LastName}, {this.DateOfBirth.ToString("dd/mm/yyyy", DateTimeFormatInfo.InvariantInfo)}," +
+            return $"{this.Id}, {this.FirstName}, {this.LastName}, {this.DateOfBirth.ToString("yyyy-MMM-dd", DateTimeFormatInfo.InvariantInfo)}, " +
                 $"{this.ZipCode}, {this.City}, {this.Street}, {this.Salary}, {this.Gender}";
         }
     }

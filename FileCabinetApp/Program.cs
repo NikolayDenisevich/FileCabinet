@@ -11,12 +11,13 @@ namespace FileCabinetApp
     /// </summary>
     public static class Program
     {
-        private const string DeveloperName = "Nikolay Denisevich";
+        private const string DeveloperName = "Nikolay Sazhich";
         private const string HintMessage = "Enter your command, or enter 'help' to get help.";
         private const int CommandHelpIndex = 0;
         private const int DescriptionHelpIndex = 1;
         private const int ExplanationHelpIndex = 2;
         private const string DefaultRootDirectory = @"C:\Cabinet";
+        private const string DefaultBinaryFileName = "cabinet-records.db";
 
         private static bool isRunning = true;
         private static IFileCabinetService<FileCabinetRecord, RecordArguments> fileCabinetService;
@@ -299,9 +300,9 @@ namespace FileCabinetApp
 
         private static void SaveToXml(string filePath)
         {
-            FileCabinetService servise = fileCabinetService as FileCabinetService;
+            FileCabinetMemoryService servise = fileCabinetService as FileCabinetMemoryService;
             var records = servise.GetRecords();
-            FileCabinetServiceSnapshot snapshot = FileCabinetService.MakeSnapshot(records);
+            FileCabinetServiceSnapshot snapshot = FileCabinetMemoryService.MakeSnapshot(records);
             using (var streamWriter = new StreamWriter(filePath, false, Encoding.UTF8))
             {
                 snapshot.SaveToXml(streamWriter);
@@ -388,9 +389,9 @@ namespace FileCabinetApp
 
         private static void SaveToCsv(string filePath)
         {
-            FileCabinetService servise = fileCabinetService as FileCabinetService;
+            FileCabinetMemoryService servise = fileCabinetService as FileCabinetMemoryService;
             var records = servise.GetRecords();
-            FileCabinetServiceSnapshot snapshot = FileCabinetService.MakeSnapshot(records);
+            FileCabinetServiceSnapshot snapshot = FileCabinetMemoryService.MakeSnapshot(records);
             using (var streamWriter = new StreamWriter(filePath, false, Encoding.UTF8))
             {
                 snapshot.SaveToCsv(streamWriter);
@@ -409,8 +410,7 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                FileCabinetService service = fileCabinetService as FileCabinetService;
-                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByFirstName(trimmedValue);
+                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByFirstName(trimmedValue);
                 CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, trimmedValue);
             }
             else
@@ -424,8 +424,7 @@ namespace FileCabinetApp
             if (!string.IsNullOrEmpty(value))
             {
                 string trimmedValue = value.Trim();
-                FileCabinetService service = fileCabinetService as FileCabinetService;
-                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByLastName(trimmedValue);
+                ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByLastName(trimmedValue);
                 CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, trimmedValue);
             }
             else
@@ -443,8 +442,7 @@ namespace FileCabinetApp
                 bool isParsed = DateTime.TryParse(trimmedValue, out dateOfBirth);
                 if (isParsed)
                 {
-                    FileCabinetService service = fileCabinetService as FileCabinetService;
-                    ReadOnlyCollection<FileCabinetRecord> readonlyCollection = service.FindByDateOfBirth(dateOfBirth);
+                    ReadOnlyCollection<FileCabinetRecord> readonlyCollection = fileCabinetService.FindByDateOfBirth(dateOfBirth);
                     CheckRecordsForZeroOrShow(readonlyCollection, propertyFullName, value);
                 }
                 else
@@ -462,8 +460,7 @@ namespace FileCabinetApp
         {
             foreach (var item in records)
             {
-                Console.WriteLine($"#{item.Id}, {item.FirstName}, {item.LastName}, {item.DateOfBirth.ToString("yyyy-MMM-dd", DateTimeFormatInfo.InvariantInfo)}, " +
-                    $"{item.ZipCode}, {item.City}, {item.Street}, {item.Salary}, {item.Gender}");
+                Console.WriteLine(item);
             }
         }
 
@@ -507,7 +504,7 @@ namespace FileCabinetApp
                 {
                     case "--VALIDATION-RULES=CUSTOM":
                         {
-                            CreateFileCabinerCustomServiceInstance();
+                            CreateFileCabinerCustomValidationServiceInstance();
                             break;
                         }
 
@@ -527,7 +524,39 @@ namespace FileCabinetApp
 
                             if (args[1].Equals("custom", StringComparison.InvariantCultureIgnoreCase))
                             {
-                                CreateFileCabinerCustomServiceInstance();
+                                CreateFileCabinerCustomValidationServiceInstance();
+                                break;
+                            }
+                            else
+                            {
+                                CreateFileCabinerDefaultServiceInstance();
+                                break;
+                            }
+                        }
+
+                    case "--STORAGE=MEMORY":
+                        {
+                            CreateFileCabinerDefaultServiceInstance();
+                            break;
+                        }
+
+                    case "--STORAGE=FILE":
+                        {
+                            CreateFileCabinerFileSystemServiceInstance();
+                            break;
+                        }
+
+                    case "-S":
+                        {
+                            if (args.Length < 2 || args[1].Equals("memory", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                CreateFileCabinerDefaultServiceInstance();
+                                break;
+                            }
+
+                            if (args[1].Equals("file", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                CreateFileCabinerFileSystemServiceInstance();
                                 break;
                             }
                             else
@@ -546,20 +575,32 @@ namespace FileCabinetApp
             }
         }
 
+        private static void CreateFileCabinerFileSystemServiceInstance()
+        {
+            Console.WriteLine("Using default validation rules.");
+            Console.WriteLine("Using filesystem storage.");
+            recordValidator = new DefaultValidator();
+            inputValidator = recordValidator.GetInputValidator();
+            string fullPath = Path.Combine(DefaultRootDirectory, DefaultBinaryFileName);
+            FileStream fileStream = File.Open(fullPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            fileCabinetService = new FileCabinetFilesystemService(recordValidator, fileStream);
+        }
+
         private static void CreateFileCabinerDefaultServiceInstance()
         {
             Console.WriteLine("Using default validation rules.");
+            Console.WriteLine("Using memory storage.");
             recordValidator = new DefaultValidator();
             inputValidator = recordValidator.GetInputValidator();
-            fileCabinetService = new FileCabinetService(recordValidator);
+            fileCabinetService = new FileCabinetMemoryService(recordValidator);
         }
 
-        private static void CreateFileCabinerCustomServiceInstance()
+        private static void CreateFileCabinerCustomValidationServiceInstance()
         {
             Console.WriteLine("Using custom validation rules.");
             recordValidator = new CustomValidator();
             inputValidator = recordValidator.GetInputValidator();
-            fileCabinetService = new FileCabinetService(recordValidator);
+            fileCabinetService = new FileCabinetMemoryService(recordValidator);
         }
 
         private static Tuple<bool, string, string> StringsConverter(string input)
