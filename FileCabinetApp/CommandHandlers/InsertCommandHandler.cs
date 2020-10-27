@@ -74,7 +74,7 @@ namespace FileCabinetApp.CommandHandlers
                 return;
             }
 
-            FileCabinetRecord record = service.GetRecords(string.Empty, r => r.Id == arguments.Id).FirstOrDefault();
+            FileCabinetRecord record = service.GetRecords($"id={arguments.Id}", r => r.Id == arguments.Id).FirstOrDefault();
             if (record is null)
             {
                 int id = service.CreateRecord(arguments);

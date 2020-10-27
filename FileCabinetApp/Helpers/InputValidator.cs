@@ -16,20 +16,54 @@ namespace FileCabinetApp
         /// </summary>
         /// <param name="container">ValidationRulesContainer instance.</param>
         /// <exception cref="ArgumentNullException">Thrown when container is null.</exception>
-        public InputValidator(ValidationRulesContainer container)
-        {
+        public InputValidator(ValidationRulesContainer container) =>
             this.container = container ?? throw new ArgumentNullException(nameof(container));
-        }
 
         /// <summary>
-        /// Validates string input.
+        /// Validates FirstName input.
         /// </summary>
         /// <param name="input">Input string.</param>
         /// <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
-        internal Tuple<bool, string> ValidateStrings(string input)
+        internal Tuple<bool, string> ValidateFirstName(string input)
         {
             bool isValid = !(string.IsNullOrEmpty(input) || input.Length < this.container.FirstName.Min || input.Length > this.container.FirstName.Max);
             string message = $"Names minimum number of characters is {this.container.FirstName.Min}, maximum is {this.container.FirstName.Max} and cannot be empty or contain only space characters";
+            return new Tuple<bool, string>(isValid, message);
+        }
+
+        /// <summary>
+        /// Validates LastName input.
+        /// </summary>
+        /// <param name="input">Input string.</param>
+        /// <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        internal Tuple<bool, string> ValidateLastName(string input)
+        {
+            bool isValid = !(string.IsNullOrEmpty(input) || input.Length < this.container.LastName.Min || input.Length > this.container.LastName.Max);
+            string message = $"Names minimum number of characters is {this.container.LastName.Min}, maximum is {this.container.LastName.Max} and cannot be empty or contain only space characters";
+            return new Tuple<bool, string>(isValid, message);
+        }
+
+        /// <summary>
+        /// Validates City input.
+        /// </summary>
+        /// <param name="input">Input string.</param>
+        /// <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        internal Tuple<bool, string> ValidateCity(string input)
+        {
+            bool isValid = !(string.IsNullOrEmpty(input) || input.Length < this.container.City.Min || input.Length > this.container.City.Max);
+            string message = $"Names minimum number of characters is {this.container.City.Min}, maximum is {this.container.City.Max} and cannot be empty or contain only space characters";
+            return new Tuple<bool, string>(isValid, message);
+        }
+
+        /// <summary>
+        /// Validates Street input.
+        /// </summary>
+        /// <param name="input">Input string.</param>
+        /// <returns>Tuple(bool, string). bool value indicates validation result. string value representes a message with valid input parameters.</returns>
+        internal Tuple<bool, string> ValidateStreet(string input)
+        {
+            bool isValid = !(string.IsNullOrEmpty(input) || input.Length < this.container.Street.Min || input.Length > this.container.Street.Max);
+            string message = $"Names minimum number of characters is {this.container.Street.Min}, maximum is {this.container.Street.Max} and cannot be empty or contain only space characters";
             return new Tuple<bool, string>(isValid, message);
         }
 

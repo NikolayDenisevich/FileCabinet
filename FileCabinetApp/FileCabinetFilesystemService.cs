@@ -23,7 +23,6 @@ namespace FileCabinetApp
         private int currentRecordsCount;
         private int maxId;
         private int deletedRecordsCount;
-        private bool isRecordReadedFromImportedFile;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FileCabinetFilesystemService"/> class.
@@ -84,7 +83,6 @@ namespace FileCabinetApp
             snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)}");
             int validRecordsCount = 0;
             IReadOnlyCollection<FileCabinetRecord> records = snapshot.Records;
-
             foreach (var newItem in records)
             {
                 RecordArguments newItemArguments = new RecordArguments
@@ -113,7 +111,6 @@ namespace FileCabinetApp
                 long foundRecordPosition = this.FindRecordPosition(newItem.Id);
                 if (foundRecordPosition is -1)
                 {
-                    this.isRecordReadedFromImportedFile = true;
                     this.CreateRecord(newItemArguments);
                 }
                 else
@@ -137,30 +134,27 @@ namespace FileCabinetApp
         {
             arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
             this.validator.ValidateArguments(arguments);
+            int recordId = arguments.Id;
             using (BinaryWriter binaryWriter = new BinaryWriter(this.fileStream, Encoding.Unicode, true))
             {
                 binaryWriter.Seek(0, SeekOrigin.End);
                 long currentRecordStartPosition = this.fileStream.Position;
-                if (!this.isRecordReadedFromImportedFile)
+                if (recordId is 0)
                 {
-                    arguments.Id = ++this.maxId;
-                    this.WriteArguments(arguments, binaryWriter);
+                    recordId = ++this.maxId;
+                    arguments.Id = recordId;
                 }
-                else
+                else if (recordId > this.maxId)
                 {
-                    this.WriteArguments(arguments, binaryWriter);
-                    if (arguments.Id > this.maxId)
-                    {
-                        this.maxId = arguments.Id;
-                    }
+                    this.maxId = recordId;
                 }
 
+                this.WriteArguments(arguments, binaryWriter);
                 this.AddRecordToIdsIndexer(currentRecordStartPosition, arguments.Id, this.idIndexer);
             }
 
-            this.isRecordReadedFromImportedFile = default;
             this.currentRecordsCount++;
-            return this.maxId;
+            return recordId;
         }
 
         /// <summary>

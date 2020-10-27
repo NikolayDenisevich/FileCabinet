@@ -367,13 +367,13 @@ namespace FileCabinetApp
 
                 case nameof(FileCabinetRecord.FirstName):
                     {
-                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateStrings, out string firstName);
+                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateFirstName, out string firstName);
                         return isCorrect ? firstName : null;
                     }
 
                 case nameof(FileCabinetRecord.LastName):
                     {
-                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateStrings, out string lastName);
+                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateLastName, out string lastName);
                         return isCorrect ? lastName : null;
                     }
 
@@ -391,13 +391,13 @@ namespace FileCabinetApp
 
                 case nameof(FileCabinetRecord.City):
                     {
-                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateStrings, out string city);
+                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateCity, out string city);
                         return isCorrect ? city : null;
                     }
 
                 case nameof(FileCabinetRecord.Street):
                     {
-                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateStrings, out string street);
+                        bool isCorrect = Input.TryCheckInput(value, Input.StringsConverter, inputValidator.ValidateStreet, out string street);
                         return isCorrect ? street : null;
                     }
 

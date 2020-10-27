@@ -19,17 +19,17 @@ namespace FileCabinetApp
         {
             validator = validator ?? throw new ArgumentNullException(nameof(validator));
             Console.Write("First Name: ");
-            string firstName = ReadInput(StringsConverter, validator.ValidateStrings);
+            string firstName = ReadInput(StringsConverter, validator.ValidateFirstName);
             Console.Write("Last Name: ");
-            string lastName = ReadInput(StringsConverter, validator.ValidateStrings);
+            string lastName = ReadInput(StringsConverter, validator.ValidateLastName);
             Console.Write("Date of birth: ");
             DateTime dateOfBirth = ReadInput(DatesConverter, validator.ValidateDate);
             Console.Write("Zip code: ");
             short zipCode = ReadInput(ShortConverter, validator.ValidateShort);
             Console.Write("City: ");
-            string city = ReadInput(StringsConverter, validator.ValidateStrings);
+            string city = ReadInput(StringsConverter, validator.ValidateCity);
             Console.Write("Street: ");
-            string street = ReadInput(StringsConverter, validator.ValidateStrings);
+            string street = ReadInput(StringsConverter, validator.ValidateStreet);
             Console.Write("Salary: ");
             decimal salary = ReadInput(DecimalConverter, validator.ValidateDecimal);
             Console.Write("Gender: ");
@@ -131,13 +131,13 @@ namespace FileCabinetApp
             bool result = true;
             if (propertiesNameValuePairs[nameof(FileCabinetRecord.FirstName)] != null)
             {
-                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.FirstName)], StringsConverter, validator.ValidateStrings, out string firstName);
+                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.FirstName)], StringsConverter, validator.ValidateFirstName, out string firstName);
                 arguments.FirstName = firstName;
             }
 
             if (propertiesNameValuePairs[nameof(FileCabinetRecord.LastName)] != null)
             {
-                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.LastName)], StringsConverter, validator.ValidateStrings, out string lastName);
+                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.LastName)], StringsConverter, validator.ValidateLastName, out string lastName);
                 arguments.LastName = lastName;
             }
 
@@ -155,13 +155,13 @@ namespace FileCabinetApp
 
             if (propertiesNameValuePairs[nameof(FileCabinetRecord.City)] != null)
             {
-                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.City)], StringsConverter, validator.ValidateStrings, out string city);
+                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.City)], StringsConverter, validator.ValidateCity, out string city);
                 arguments.City = city;
             }
 
             if (propertiesNameValuePairs[nameof(FileCabinetRecord.Street)] != null)
             {
-                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.Street)], StringsConverter, validator.ValidateStrings, out string street);
+                result &= TryCheckInput(propertiesNameValuePairs[nameof(FileCabinetRecord.Street)], StringsConverter, validator.ValidateStreet, out string street);
                 arguments.Street = street;
             }
 

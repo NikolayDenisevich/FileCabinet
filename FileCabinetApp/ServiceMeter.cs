@@ -33,7 +33,7 @@ namespace FileCabinetApp
         public int CreateRecord(RecordArguments arguments)
         {
             arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
-            this.timer.Start();
+            this.timer.Restart();
             int result = this.fileCabinetService.CreateRecord(arguments);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.CreateRecord));
@@ -48,7 +48,7 @@ namespace FileCabinetApp
         public void EditRecord(RecordArguments arguments)
         {
             arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
-            this.timer.Start();
+            this.timer.Restart();
             this.fileCabinetService.EditRecord(arguments);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.EditRecord));
@@ -62,7 +62,7 @@ namespace FileCabinetApp
         /// <returns>Readonly records collection.</returns>
         public IEnumerable<FileCabinetRecord> GetRecords(string filters, Func<FileCabinetRecord, bool> predicate)
         {
-            this.timer.Start();
+            this.timer.Restart();
             var result = this.fileCabinetService.GetRecords(filters, predicate);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.GetRecords));
@@ -76,7 +76,7 @@ namespace FileCabinetApp
         /// <returns>Records count.</returns>
         public int GetStat(out int removedRecordsCount)
         {
-            this.timer.Start();
+            this.timer.Restart();
             var result = this.fileCabinetService.GetStat(out removedRecordsCount);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.GetStat));
@@ -92,7 +92,7 @@ namespace FileCabinetApp
         public FileCabinetServiceSnapshot MakeSnapshot(IEnumerable<FileCabinetRecord> records)
         {
             records = records ?? throw new ArgumentNullException($"{nameof(records)}");
-            this.timer.Start();
+            this.timer.Restart();
             var result = this.fileCabinetService.MakeSnapshot(records);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.MakeSnapshot));
@@ -106,7 +106,7 @@ namespace FileCabinetApp
         /// <returns>Purged records count.</returns>
         public int Purge(out int totalRecordsBeforePurgeCount)
         {
-            this.timer.Start();
+            this.timer.Restart();
             var result = this.fileCabinetService.Purge(out totalRecordsBeforePurgeCount);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.Purge));
@@ -119,7 +119,7 @@ namespace FileCabinetApp
         /// <param name="recordId">Record Id.</param>
         public void Remove(int recordId)
         {
-            this.timer.Start();
+            this.timer.Restart();
             this.fileCabinetService.Remove(recordId);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.Remove));
@@ -134,7 +134,7 @@ namespace FileCabinetApp
         public int Restore(FileCabinetServiceSnapshot snapshot)
         {
             snapshot = snapshot ?? throw new ArgumentNullException($"{nameof(snapshot)}");
-            this.timer.Start();
+            this.timer.Restart();
             var result = this.fileCabinetService.Restore(snapshot);
             this.timer.Stop();
             this.ShowElapsedTime(nameof(this.Restore));
