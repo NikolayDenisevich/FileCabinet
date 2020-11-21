@@ -28,12 +28,10 @@ namespace FileCabinetApp
         /// <param name="args">Command-line arguments.</param>
         public static void Main(string[] args)
         {
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine($"File Cabinet Application, developed by {Program.DeveloperName}");
             LoadConfig();
             CheckCommandLineArguments(args);
             ICommandHandler commandHandler = CreateCommandHandlers();
-            Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine(Program.HintMessage);
             Console.WriteLine();
 
