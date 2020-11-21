@@ -30,7 +30,11 @@ namespace FileCabinetApp
         /// <exception cref="ArgumentNullException">Thrown when collection is null. -or- selectors is null. -or- writer is null.</exception>
         public static void CreateTable<T>(this IEnumerable<T> collection, Dictionary<string, string> selectors, TextWriter writer)
         {
-            collection = collection ?? throw new ArgumentNullException($"{nameof(collection)}");
+            if (collection is null)
+            {
+                return;
+            }
+
             possibleSelectors = selectors ?? throw new ArgumentNullException($"{nameof(selectors)}");
             writer = writer ?? throw new ArgumentNullException($"{nameof(writer)}");
             Type type = typeof(T);
