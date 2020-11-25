@@ -71,7 +71,7 @@ namespace FileCabinetApp
         public void ValidateArguments(RecordArguments arguments)
         {
             arguments = arguments ?? throw new ArgumentNullException($"{nameof(arguments)}");
-            if (arguments.DateOfBirth < this.DateFrom || arguments.DateOfBirth >= this.DateTo)
+            if (arguments.DateOfBirth < this.DateFrom || arguments.DateOfBirth > this.DateTo)
             {
                 throw new ArgumentOutOfRangeException($"{nameof(arguments.DateOfBirth)} should be more than {this.DateFrom.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} and not more than {this.DateTo.ToString("dd-MMM-yyyy", DateTimeFormatInfo.InvariantInfo)} or invalid date format input");
             }

@@ -104,6 +104,10 @@ namespace FileCabinetGenerator
             XmlHelper xmlData = new XmlHelper();
             xmlData.Records = recordsXml;
             XmlSerializer serializer = new XmlSerializer(typeof(XmlHelper));
+            if (File.Exists(FilePath))
+            {
+                File.Delete(FilePath);
+            }
             using var stream = File.Open(FilePath, FileMode.CreateNew, FileAccess.Write);
             using var streamWriter = new StreamWriter(stream, Encoding.Unicode);
             XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
@@ -118,6 +122,10 @@ namespace FileCabinetGenerator
 
         private static void WriteToCsvFile()
         {
+            if (File.Exists(FilePath))
+            {
+                File.Delete(FilePath);
+            }
             using var stream = File.Open(FilePath, FileMode.CreateNew, FileAccess.Write);
             using var streamWriter = new StreamWriter(stream, Encoding.Unicode);
             foreach (var item in records)
