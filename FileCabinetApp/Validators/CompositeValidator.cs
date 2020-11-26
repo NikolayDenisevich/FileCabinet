@@ -29,7 +29,7 @@ namespace FileCabinetApp
         {
             foreach (var validator in this.validators)
             {
-                if (arguments.Id < 1)
+                if (arguments.Id < 0)
                 {
                     throw new ArgumentException($"Incorrect id record {arguments.Id}");
                 }

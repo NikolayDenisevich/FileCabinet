@@ -207,7 +207,7 @@ namespace FileCabinetGenerator
 
         private static string GetString()
         {
-            int length = random.Next(2, 30);
+            int length = random.Next(2, 20);
             char[] charArray = new char[length];
             for (int i = 0; i < length; i++)
             {
